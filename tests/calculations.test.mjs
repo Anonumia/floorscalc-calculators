@@ -1,5 +1,5 @@
 import test from "node:test";import assert from "node:assert/strict";
-const calc=await import(new URL("../app/calculations.ts",import.meta.url));
+const calc=await import(new URL("../src/lib/calculations.ts",import.meta.url));
 test("general one room",()=>{const r=calc.areaResult([{length:10,width:12}],10);assert.deepEqual([r.measured,r.allowanceArea,r.finalArea],[120,12,132])});
 test("general multiple and boxes",()=>{const r=calc.areaResult([{length:10,width:12},{length:8,width:10}],10,23.5);assert.deepEqual([r.measured,r.allowanceArea,r.finalArea,r.packages],[200,20,220,10])});
 test("tile",()=>{const r=calc.pieceResult([{length:10,width:10}],1,1,10,12);assert.deepEqual([r.before,r.total,r.packages],[100,110,10])});

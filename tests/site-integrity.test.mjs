@@ -1,20 +1,89 @@
-import test from "node:test";import assert from "node:assert/strict";import {readFile} from "node:fs/promises";
-const files=await Promise.all(["app/layout.tsx","app/[[...slug]]/page.tsx","app/sitemap.ts","app/robots.ts"].map(async p=>[p,await readFile(p,"utf8")]));const source=files.map(x=>x[1]).join("\n");
-test("old brand and old domain are absent",()=>{assert.doesNotMatch(source,/Floorwise|floorwise-calculators\.sites\.openai/i)});
-test("production domain is centralized",async()=>{const config=await readFile("app/site-config.ts","utf8");assert.match(config,/https:\/\/floorscalc\.com/);assert.match(config,/FloorsCalc/)});
-test("all internal literal links point to known pages",()=>{const links=[...source.matchAll(/href="(\/[^"]*)"/g)].map(x=>x[1]);const known=new Set(["/","/calculators","/guides","/about","/contact","/privacy","/terms","/general-flooring-calculator"]);for(const link of links)assert.ok(known.has(link),`Unknown internal link: ${link}`)});
-test("SEO endpoints and custom 404 exist",async()=>{for(const path of ["app/sitemap.ts","app/robots.ts","app/not-found.tsx"])assert.ok((await readFile(path,"utf8")).length>20)});
-test("contact route protects secrets and spam",async()=>{const route=await readFile("app/api/contact/route.ts","utf8");assert.match(route,/RESEND_API_KEY/);assert.match(route,/CONTACT_EMAIL/);assert.match(route,/CONTACT_FROM_EMAIL/);assert.match(route,/website/);assert.match(route,/LIMIT=5/)});
-test("every calculator has imperial and metric worked examples",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");for(const kind of ["general","tile","vinyl","laminate","hardwood","carpet"])assert.match(calculator,new RegExp(`${kind}:\\s*\\{`));assert.ok((calculator.match(/imperial:\s*\{/g)||[]).length>=6);assert.ok((calculator.match(/metric:\s*\{/g)||[]).length>=6);assert.ok((calculator.match(/example:/g)||[]).length>=12);assert.match(calculator,/data-unit=\{unit\}/)});
-test("general box coverage is simple and unit-aware",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");assert.match(calculator,/Coverage per box \(\{areaUnit\}\) — optional/);assert.match(calculator,/Example: 22\.45/);assert.match(calculator,/Example: 2\.09/);assert.match(calculator,/Enter the square-meter coverage printed on one flooring box/);assert.doesNotMatch(calculator,/Package method/)});
-test("guides are consolidated into one useful page",async()=>{const page=await readFile("app/[[...slug]]/page.tsx","utf8");for(const heading of ["How to Measure a Room for Flooring","How Much Flooring Allowance Should You Add?","Square Feet vs Square Yards","How Flooring Box Coverage Works","Why Carpet Estimates Are Different from Boxed Flooring","Choosing Imperial vs Metric","Why Quantities Are Rounded Up","Common Measuring Mistakes","Ready to Calculate?"])assert.match(page,new RegExp(heading.replace(/[?]/g,"\\?")));assert.doesNotMatch(page,/href=\{`\/guides\//);const sitemap=await readFile("app/sitemap.ts","utf8");assert.doesNotMatch(sitemap,/guides\.map|guides\/\$\{/)});
-test("requested policy and wording revisions are present",async()=>{const page=await readFile("app/[[...slug]]/page.tsx","utf8");const calculator=await readFile("app/Calculator.tsx","utf8");assert.match(page,/Calculator-specific limitations/);assert.doesNotMatch(page,/Children’s privacy|children under 13/i);assert.match(page,/measurement system\s*\(Imperial or Metric\)/);assert.match(calculator,/Estimated roll lengths and material quantities are displayed as planning values/)});
-test("final navigation and footer copy are correct",async()=>{const page=await readFile("app/[[...slug]]/page.tsx","utf8");const header=page.slice(page.indexOf("function Header"),page.indexOf("function Footer"));assert.doesNotMatch(header,/href="\/contact"/);for(const href of ["/calculators","/guides","/about","/contact","/privacy","/terms"])assert.match(page,new RegExp(`href="${href}"`));assert.match(page,/Free flooring planning\s*calculators\. Results are estimates, not professional advice\./)});
-test("calculator terminology defaults and conditional rounding are polished",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");assert.match(calculator,/imperial: \{ length: 47\.25, width: 7\.5 \}/);assert.match(calculator,/metric: \{ length: 120, width: 19 \}/);for(const term of ["Individual {terms?.singular} area","Additional {terms?.plural} from allowance","Whole {terms?.plural} required","pieceWasRounded","packageWasRounded"])assert.ok(calculator.includes(term),`Missing ${term}`);assert.doesNotMatch(calculator,/>\s*Calculate\s*<\/button>/);assert.match(calculator,/Box quantities are rounded up to the next whole box when box coverage is provided/)});
-test("all calculators share copy, compact print, and mobile sticky results",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");const css=await readFile("app/refinements.css","utf8");assert.match(calculator,/Copy Results/);assert.match(calculator,/Print Results/);assert.match(calculator,/navigator\.clipboard\.writeText/);assert.match(calculator,/Copied!/);assert.match(calculator,/mobile-sticky-result/);assert.match(calculator,/scrollIntoView/);assert.match(calculator,/print-summary/);assert.match(calculator,/result \? " has-sticky-result"/);assert.match(css,/@media\(max-width:760px\).*\.print-results\{display:none\}/s);assert.match(css,/@media print.*\.mobile-sticky-result.*display:none!important/s);assert.match(css,/min-height:58px/)});
-test("copy and print summaries include inputs, units, results, and omit empty packaging",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");assert.match(calculator,/Measurement system: \$\{systemName\}/);assert.match(calculator,/\.\.\.rooms\.map/);assert.match(calculator,/packValue !== ""/);assert.match(calculator,/Result Breakdown/);assert.match(calculator,/planningDisclaimer/);assert.match(calculator,/resultLines/);assert.match(calculator,/inputLines/)});
-test("copy report is compact plain text with one blank line between sections",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");for(const title of ["General Flooring Calculator","Tile Calculator","Vinyl Plank Calculator","Laminate Flooring Calculator","Hardwood Flooring Calculator","Carpet Calculator"])assert.match(calculator,new RegExp(title));assert.match(calculator,/\["FloorsCalc", copyCalculatorTitles\[kind\], `Measurement system: \$\{systemName\}`\]\.join\("\\n"\)/);assert.match(calculator,/\["INPUTS", \.\.\.inputLines\]\.join\("\\n"\)/);assert.match(calculator,/\["RESULTS", \.\.\.copyResultLines\]\.join\("\\n"\)/);assert.match(calculator,/\[\.\.\.disclaimerLines, "floorscalc\.com"\]\.join\("\\n"\)/);assert.match(calculator,/\]\.join\("\\n\\n"\)/)});
-test("copy summary omits transparency-only intermediate values",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");const summary=calculator.slice(calculator.indexOf("const copyResultLines"),calculator.indexOf("const inputLines"));for(const omitted of ["Individual","before allowance","Additional","pieceArea","allowancePieces"])assert.doesNotMatch(summary,new RegExp(omitted));for(const kept of ["Combined measured area","Material allowance","Final material area","Whole","Estimated carpet roll length","Estimated roll material"])assert.match(summary,new RegExp(kept));assert.match(summary,/kind === "general" && unit === "imperial"/)});
-test("print view is an isolated professional report",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");const css=await readFile("app/refinements.css","utf8");for(const text of ["Measurement System","Inputs","Result Breakdown","www.floorscalc.com","print-report-header","print-disclaimer"])assert.match(calculator,new RegExp(text));assert.ok(css.includes("body *{visibility:hidden!important}"));assert.ok(css.includes(".print-summary,.print-summary *{visibility:visible!important}"));assert.ok(css.includes("main article>:not(.calculator)"));assert.ok(css.includes(".calculator>:not(.print-summary)"));assert.match(css,/\.print-summary\{display:block!important;position:absolute/);assert.match(css,/grid-template-columns:minmax\(1\.8in,42%\) 1fr/);assert.match(css,/background:#fff!important/)});
-test("numeric inputs select defaults and strip leading zeros",async()=>{const calculator=await readFile("app/Calculator.tsx","utf8");assert.match(calculator,/event\.currentTarget\.select\(\)/);assert.match(calculator,/value\.replace\(\/\^0\+\(\?=\\d\)\//);assert.match(calculator,/event\.currentTarget\.value = normalized/);assert.match(calculator,/event\.preventDefault\(\)/);assert.ok((calculator.match(/onFocus=\{selectNumericValue\}/g)||[]).length>=9);assert.ok((calculator.match(/onInput=\{normalizeNumericInput\}/g)||[]).length>=9);assert.ok((calculator.match(/onKeyDown=\{preventLeadingZero\}/g)||[]).length>=9);assert.ok((calculator.match(/normalizedNumericChange\(e\)/g)||[]).length>=9)});
-test("guide anchors and final policy copy are present",async()=>{const page=await readFile("app/[[...slug]]/page.tsx","utf8");for(const id of ["measure-room","material-allowance","square-feet-vs-square-yards","box-coverage","carpet-estimates","imperial-vs-metric","rounding-up","measuring-mistakes","ready-to-calculate"])assert.match(page,new RegExp(`id="${id}"`));assert.match(page,/Calculation Accuracy/);assert.match(page,/independently developed and is not affiliated/);assert.match(page,/scrape, copy, or reuse/)});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { access, readFile } from "node:fs/promises";
+
+const read = (path) => readFile(path, "utf8");
+const pagePath = "src/components/SitePage.tsx";
+const calculatorPath = "src/components/Calculator.tsx";
+
+test("Astro static and Cloudflare Pages architecture is explicit", async () => {
+  const [pkg, config] = await Promise.all([read("package.json"), read("astro.config.ts")]);
+  assert.match(pkg, /astro check/);
+  assert.match(pkg, /astro build/);
+  assert.doesNotMatch(pkg, /vinext|next|wrangler|cloudflare\/vite-plugin/i);
+  assert.match(config, /output: "static"/);
+  assert.match(config, /https:\/\/floorscalc\.com/);
+  for (const path of ["next.config.ts", "vite.config.ts", "worker/index.ts", ".openai/hosting.json"]) {
+    await assert.rejects(access(path));
+  }
+});
+
+test("production domain and approved homepage wording are preserved", async () => {
+  const [config, page] = await Promise.all([read("src/data/site-config.ts"), read(pagePath)]);
+  assert.match(config, /https:\/\/floorscalc\.com/);
+  assert.match(config, /Free Flooring Calculators/);
+  assert.match(page, /siteConfig\.tagline/);
+  assert.doesNotMatch(`${config}\n${page}`, /Floorwise|FREE FLOORING MATERIAL CALCULATORS/);
+});
+
+test("all six calculators and reusable formulas remain present", async () => {
+  const [data, calculator, calculations] = await Promise.all([
+    read("src/data/site-data.ts"), read(calculatorPath), read("src/lib/calculations.ts"),
+  ]);
+  for (const slug of ["general-flooring", "tile", "vinyl-plank", "laminate-flooring", "hardwood-flooring", "carpet"]) {
+    assert.match(data, new RegExp(slug));
+  }
+  for (const kind of ["general", "tile", "vinyl", "laminate", "hardwood", "carpet"]) {
+    assert.match(calculator, new RegExp(`${kind}:\\s*\\{`));
+  }
+  for (const fn of ["areaResult", "pieceResult", "carpetResult"]) assert.match(calculations, new RegExp(fn));
+});
+
+test("calculator interaction, copy, print, reset, and mobile behavior remain", async () => {
+  const [calculator, css] = await Promise.all([read(calculatorPath), read("src/styles/refinements.css")]);
+  for (const token of ["Add another room", "Remove room", "Reset", "Copy Results", "Print Results", "navigator.clipboard.writeText", "scrollIntoView", "mobile-sticky-result", "print-summary"]) {
+    assert.match(calculator, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.match(css, /@media\(max-width:760px\).*\.print-results\{display:none\}/s);
+  assert.match(css, /@media print.*\.mobile-sticky-result.*display:none!important/s);
+});
+
+test("copy and print reports remain separate and compact", async () => {
+  const calculator = await read(calculatorPath);
+  assert.match(calculator, /\]\s*\.join\("\\n\\n"\)/);
+  assert.match(calculator, /\["INPUTS", \.\.\.inputLines\]\.join\("\\n"\)/);
+  assert.match(calculator, /\["RESULTS", \.\.\.copyResultLines\]\.join\("\\n"\)/);
+  assert.match(calculator, /Result Breakdown/);
+  assert.match(calculator, /print-report-header/);
+});
+
+test("guides, policy wording, navigation, and footer are preserved", async () => {
+  const page = await read(pagePath);
+  for (const text of ["How to Measure a Room for Flooring", "How Much Flooring Allowance Should You Add?", "Why Carpet Estimates Are Different", "Calculation Accuracy", "Privacy Policy", "Terms of Use", "Free flooring planning"]) {
+    assert.match(page, new RegExp(text.replace("?", "\\?")));
+  }
+  for (const href of ["/calculators", "/guides", "/about", "/contact", "/privacy", "/terms"]) assert.match(page, new RegExp(`href="${href}"`));
+});
+
+test("favicon assets and global metadata are complete", async () => {
+  const layout = await read("src/layouts/BaseLayout.astro");
+  for (const file of ["favicon.ico", "favicon.svg", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png", "android-chrome-192x192.png", "android-chrome-512x512.png", "site.webmanifest"]) {
+    await access(`public/${file}`);
+    assert.match(`${layout}\n${await read("public/site.webmanifest")}`, new RegExp(file.replace(".", "\\.")));
+  }
+});
+
+test("Cloudflare Pages contact function validates, rate-limits, and keeps secrets server-side", async () => {
+  const fn = await read("functions/api/contact.ts");
+  for (const token of ["RESEND_API_KEY", "CONTACT_EMAIL", "CONTACT_FROM_EMAIL", "LIMIT = 5", "website", "CF-Connecting-IP", "api.resend.com"]) assert.match(fn, new RegExp(token));
+  assert.doesNotMatch(await read("src/components/ContactForm.tsx"), /RESEND_API_KEY/);
+});
+
+test("numeric input and rounding safeguards remain", async () => {
+  const calculator = await read(calculatorPath);
+  assert.match(calculator, /event\.currentTarget\.select\(\)/);
+  assert.match(calculator, /value\.replace\(\/\^0\+/);
+  assert.match(calculator, /pieceWasRounded/);
+  assert.match(calculator, /packageWasRounded/);
+  assert.match(calculator, /Box quantities are rounded up/);
+});

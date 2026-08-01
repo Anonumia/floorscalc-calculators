@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ReactSitePage from "../components/ReactSitePage.astro";
+import { calculators } from "../data/site-data";
+import { siteConfig } from "../data/site-config";
+
+export function getStaticPaths() {
+  const staticRoutes = ["", "calculators", "guides", "about", "contact", "privacy", "terms"];
+  return [...staticRoutes, ...calculators.map(([slug]) => slug)].map((slug) => ({
+    params: { slug: slug || undefined },
+    props: { slug },
+  }));
+}
+
+const { slug } = Astro.props as { slug: string };
+const calculator = calculators.find(([candidate]) => candidate === slug);
+const titles: Record<string, string> = {
+  "": "Free Flooring Calculators",
+  calculators: "All Flooring Calculators",
+  guides: "Flooring Measurement Guides",
+  about: "About",
+  contact: "Contact",
+  privacy: "Privacy Policy",
+  terms: "Terms of Use",
+};
+const title = calculator?.[1] ?? titles[slug];
+const description = calculator?.[2]
+  ?? (slug === "guides"
+    ? "Practical flooring measurement guidance covering room area, material allowance, box coverage, carpet estimates, units, and rounding."
+    : slug === "contact"
+      ? `Contact ${siteConfig.name} about a calculator or site question.`
+      : siteConfig.description);
+const hydrated = Boolean(calculator) || slug === "contact";
+---
+<BaseLayout title={title} description={description} path={slug ? `/${slug}` : "/"}>
+  <ReactSitePage slug={slug} hydrate={hydrated} />
+</BaseLayout>

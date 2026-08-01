@@ -1,0 +1,25 @@
+---
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
+import SitePage from "./SitePage";
+
+interface Props {
+  slug: string;
+  hydrate?: boolean;
+}
+
+const { slug, hydrate = false } = Astro.props;
+const html = renderToString(createElement(SitePage, { slug }));
+---
+<div data-react-site-page={hydrate ? slug : undefined} set:html={html}></div>
+{hydrate && (
+  <script>
+    import { createElement } from "react";
+    import { hydrateRoot } from "react-dom/client";
+    import SitePage from "./SitePage";
+
+    document.querySelectorAll<HTMLElement>("[data-react-site-page]").forEach((root) => {
+      hydrateRoot(root, createElement(SitePage, { slug: root.dataset.reactSitePage || "" }));
+    });
+  </script>
+)}

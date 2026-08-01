@@ -8,7 +8,7 @@ import {
   pieceResult,
   type Room,
   type Unit,
-} from "./calculations";
+} from "../lib/calculations";
 
 type Kind = "general" | "tile" | "vinyl" | "laminate" | "hardwood" | "carpet";
 const labels: Record<Kind, string> = {

@@ -1,10 +1,12 @@
-import Link from "next/link";
-import Calculator from "../Calculator";
-import ContactForm from "../ContactForm";
-import { calculators } from "../site-data";
-import { siteConfig } from "../site-config";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import type { AnchorHTMLAttributes } from "react";
+import Calculator from "./Calculator";
+import ContactForm from "./ContactForm";
+import { calculators } from "../data/site-data";
+import { siteConfig } from "../data/site-config";
+
+const Link = ({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+  <a href={href} {...props} />
+);
 
 const calcKinds: Record<string, any> = {
   "general-flooring-calculator": "general",
@@ -53,39 +55,6 @@ function Footer() {
   );
 }
 
-const titles: Record<string, string> = {
-  "": "Free Flooring Calculators",
-  calculators: "All Flooring Calculators",
-  guides: "Flooring Measurement Guides",
-  about: "About",
-  contact: "Contact",
-  privacy: "Privacy Policy",
-  terms: "Terms of Use",
-  ...Object.fromEntries(calculators.map((x) => [x[0], x[1]])),
-};
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug?: string[] }>;
-}): Promise<Metadata> {
-  const { slug = [] } = await params;
-  const path = slug.join("/");
-  const title = titles[path] || "Page Not Found";
-  const description =
-    path in calcKinds
-      ? calculators.find((x) => x[0] === path)?.[2]
-      : path === "guides"
-        ? "Practical flooring measurement guidance covering room area, material allowance, box coverage, carpet estimates, units, and rounding."
-        : path === "contact"
-          ? `Contact ${siteConfig.name} about a calculator or site question.`
-          : siteConfig.description;
-  return {
-    title,
-    description,
-    alternates: { canonical: `/${path}` },
-    openGraph: { title, description, url: `${siteConfig.url}/${path}` },
-  };
-}
 const Cards = () => (
   <div className="cards">
     {calculators.map(([slug, title, desc], i) => (
@@ -193,13 +162,7 @@ const specific: Record<
       "This conservative strip method does not optimize seam placement or reuse remnants across rooms. It is not installer-grade.",
   },
 };
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ slug?: string[] }>;
-}) {
-  const p = await params;
-  const slug = p.slug?.[0] || "";
+export default function SitePage({ slug = "" }: { slug?: string }) {
   let content;
   if (!slug)
     content = (
@@ -565,7 +528,7 @@ export default async function Page({
         </p>
       </article>
     );
-  else notFound();
+  else return null;
   return (
     <>
       <Header />

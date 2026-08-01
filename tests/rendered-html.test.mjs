@@ -1,91 +1,50 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
+const read = (path) => readFile(new URL(`../dist/${path}`, import.meta.url), "utf8");
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-
-  return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
-}
-
-test("server-renders the starter loading skeleton", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-
-  const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
-    html,
-    /Your first version will appear here automatically when it’s ready\./,
-  );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
+test("homepage preserves approved branding and metadata", async () => {
+  const html = await read("index.html");
+  assert.match(html, /FREE FLOORING CALCULATORS/i);
+  assert.match(html, /<title>Free Flooring Calculators \| FloorsCalc<\/title>/);
+  assert.match(html, /href="https:\/\/floorscalc\.com\/"/);
+  assert.match(html, /favicon-16x16\.png/);
+  assert.match(html, /apple-touch-icon\.png/);
+  assert.match(html, /site\.webmanifest/);
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
-  ]);
+test("every required route is generated", async () => {
+  const routes = [
+    "index.html", "calculators/index.html", "general-flooring-calculator/index.html",
+    "tile-calculator/index.html", "vinyl-plank-calculator/index.html",
+    "laminate-flooring-calculator/index.html", "hardwood-flooring-calculator/index.html",
+    "carpet-calculator/index.html", "guides/index.html", "about/index.html",
+    "contact/index.html", "privacy/index.html", "terms/index.html", "404.html",
+  ];
+  for (const route of routes) assert.ok((await read(route)).length > 200, route);
+});
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
+test("calculator pages contain interactive, copy, print, and sticky-result UI", async () => {
+  const html = await read("tile-calculator/index.html");
+  for (const text of ["Tile Calculator", "Copy Results", "Print Results", "Add another room", "mobile-sticky-result"]) {
+    assert.match(html, new RegExp(text));
+  }
+  assert.match(html, /data-react-site-page="tile-calculator"/);
+});
 
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
+test("contact page contains the complete private submission form", async () => {
+  const html = await read("contact/index.html");
+  for (const name of ["name", "email", "subject", "message", "website"]) {
+    assert.match(html, new RegExp(`name="${name}"`));
+  }
+  assert.match(html, /data-react-site-page="contact"/);
+});
 
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
-
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+test("SEO outputs are generated", async () => {
+  assert.match(await read("robots.txt"), /Sitemap: https:\/\/floorscalc\.com\/sitemap-index\.xml/);
+  const sitemap = await read("sitemap-0.xml");
+  for (const path of ["/calculators/", "/tile-calculator/", "/guides/", "/privacy/"]) {
+    assert.match(sitemap, new RegExp(path.replaceAll("/", "\\/")));
+  }
 });

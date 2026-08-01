@@ -1,0 +1,8 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { siteConfig } from "../data/site-config";
+---
+<BaseLayout title="Page Not Found" description={siteConfig.description} path="/404">
+  <header><a class="brand" href="/">{siteConfig.name}</a></header>
+  <main id="main"><article class="reading"><p class="eyebrow">404 error</p><h1>Page not found</h1><p>The page may have moved, or the address may be incorrect.</p><a class="button" href="/calculators">View all calculators</a></article></main>
+</BaseLayout>
