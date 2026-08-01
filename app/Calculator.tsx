@@ -19,7 +19,42 @@ const labels: Record<Kind, string> = {
   hardwood: "Hardwood",
   carpet: "Carpet",
 };
+const calculatorTitles: Record<Kind, string> = {
+  general: "General Flooring Calculator",
+  tile: "Tile Calculator",
+  vinyl: "Vinyl Plank Calculator",
+  laminate: "Laminate Calculator",
+  hardwood: "Hardwood Calculator",
+  carpet: "Carpet Calculator",
+};
 const fmt = (n: number) => Number(n.toFixed(2)).toLocaleString();
+const selectNumericValue = (event: React.FocusEvent<HTMLInputElement>) =>
+  event.currentTarget.select();
+const withoutLeadingZeros = (value: string) =>
+  value.replace(/^0+(?=\d)/, "");
+const normalizedNumericChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const normalized = withoutLeadingZeros(event.currentTarget.value);
+  if (normalized !== event.currentTarget.value) event.currentTarget.value = normalized;
+  return normalized;
+};
+const normalizeNumericInput = (event: React.FormEvent<HTMLInputElement>) => {
+  const input = event.currentTarget;
+  const normalized = withoutLeadingZeros(input.value);
+  input.value = normalized;
+  queueMicrotask(() => {
+    if (input.value !== normalized && Number(input.value) === Number(normalized)) {
+      input.value = normalized;
+    }
+  });
+};
+const preventLeadingZero = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const input = event.currentTarget;
+  if (/^[0-9]$/.test(event.key) && input.value === "0" && input.selectionStart === input.selectionEnd) {
+    event.preventDefault();
+    input.value = event.key;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+};
 const differsFromWhole = (raw: number, whole: number) =>
   Math.abs(whole - raw) > 1e-10;
 const pieceTerms: Record<"tile" | "vinyl" | "laminate" | "hardwood", { singular: string; plural: string }> = {
@@ -163,7 +198,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
   function update(i: number, key: keyof Room, value: string) {
     setRooms(
       rooms.map((r, j) =>
-        j === i ? { ...r, [key]: key === "name" ? value : Number(value) } : r,
+        j === i ? { ...r, [key]: key === "name" ? value : Number(withoutLeadingZeros(value)) } : r,
       ),
     );
   }
@@ -251,7 +286,8 @@ export default function Calculator({ kind }: { kind: Kind }) {
   ];
   const copyResults = async () => {
     if (!result) return;
-    const text = ["FloorsCalc", `${labels[kind]} calculator`, `Measurement system: ${systemName}`, "", "Inputs", ...inputLines, "", "Result Breakdown", ...resultLines, "", planningDisclaimer].join("\n");
+    const disclaimerLines = planningDisclaimer.split(/(?<=only\.) /);
+    const text = ["FloorsCalc", calculatorTitles[kind], `Measurement system: ${systemName}`, "Inputs", ...inputLines, "Result Breakdown", ...resultLines, ...disclaimerLines].join("\n\n");
     await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2200);
@@ -302,7 +338,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 max="10000"
                 step="any"
                 value={r.length}
-                onChange={(e) => update(i, "length", e.target.value)}
+                onChange={(e) => update(i, "length", normalizedNumericChange(e))}
+                onInput={normalizeNumericInput}
+                onKeyDown={preventLeadingZero}
+                onFocus={selectNumericValue}
                 required
               />
             </label>
@@ -314,7 +353,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 max="10000"
                 step="any"
                 value={r.width}
-                onChange={(e) => update(i, "width", e.target.value)}
+                onChange={(e) => update(i, "width", normalizedNumericChange(e))}
+                onInput={normalizeNumericInput}
+                onKeyDown={preventLeadingZero}
+                onFocus={selectNumericValue}
                 required
               />
             </label>
@@ -355,7 +397,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 min="0.01"
                 step="any"
                 value={productL}
-                onChange={(e) => setProductL(Number(e.target.value))}
+                onChange={(e) => setProductL(Number(normalizedNumericChange(e)))}
+                onInput={normalizeNumericInput}
+                onKeyDown={preventLeadingZero}
+                onFocus={selectNumericValue}
               />
             </label>
             <label>
@@ -365,7 +410,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 min="0.01"
                 step="any"
                 value={productW}
-                onChange={(e) => setProductW(Number(e.target.value))}
+                onChange={(e) => setProductW(Number(normalizedNumericChange(e)))}
+                onInput={normalizeNumericInput}
+                onKeyDown={preventLeadingZero}
+                onFocus={selectNumericValue}
               />
             </label>
           </div>
@@ -378,7 +426,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
               min="0.01"
               step="any"
               value={rollWidth}
-              onChange={(e) => setRollWidth(Number(e.target.value))}
+              onChange={(e) => setRollWidth(Number(normalizedNumericChange(e)))}
+              onInput={normalizeNumericInput}
+              onKeyDown={preventLeadingZero}
+              onFocus={selectNumericValue}
             />
           </label>
         ) : kind === "general" ? (
@@ -392,7 +443,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 unit === "imperial" ? "Example: 22.45" : "Example: 2.09"
               }
               value={packValue}
-              onChange={(e) => setPackValue(e.target.value)}
+              onChange={(e) => setPackValue(normalizedNumericChange(e))}
+              onInput={normalizeNumericInput}
+              onKeyDown={preventLeadingZero}
+              onFocus={selectNumericValue}
             />
             <small>
               {unit === "imperial"
@@ -409,7 +463,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
               step="any"
               placeholder={unit === "imperial" ? "Example: 20" : "Example: 2"}
               value={packValue}
-              onChange={(e) => setPackValue(e.target.value)}
+              onChange={(e) => setPackValue(normalizedNumericChange(e))}
+              onInput={normalizeNumericInput}
+              onKeyDown={preventLeadingZero}
+              onFocus={selectNumericValue}
             />
             <small>
               Enter the coverage printed on one hardwood carton or shown on the
@@ -444,7 +501,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 min="0.01"
                 step="any"
                 value={packValue}
-                onChange={(e) => setPackValue(e.target.value)}
+                onChange={(e) => setPackValue(normalizedNumericChange(e))}
+                onInput={normalizeNumericInput}
+                onKeyDown={preventLeadingZero}
+                onFocus={selectNumericValue}
               />
               <small>
                 {kind === "tile"
@@ -464,7 +524,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
             max="50"
             step="0.1"
             value={allowance}
-            onChange={(e) => setAllowance(Number(e.target.value))}
+            onChange={(e) => setAllowance(Number(normalizedNumericChange(e)))}
+            onInput={normalizeNumericInput}
+            onKeyDown={preventLeadingZero}
+            onFocus={selectNumericValue}
           />
           <small>
             10% is a recommended starting point, not a hidden assumption.
@@ -615,7 +678,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
             <button type="button" onClick={copyResults}>Copy Results</button>
             <button type="button" className="print-results" onClick={() => window.print()}>Print Results</button>
           </div>
-          <p className="copy-status" role="status" aria-live="polite">{copied ? "Results copied" : ""}</p>
+          <p className="copy-status" role="status" aria-live="polite">{copied ? "Copied!" : ""}</p>
           {kind === "carpet" && (
             <p className="notice">
               <strong>Planning estimate:</strong> actual requirements may change
@@ -629,7 +692,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
       {result && (
         <section className="print-summary" aria-label="Printable calculation summary">
           <h1>FloorsCalc</h1>
-          <h2>{labels[kind]} calculator</h2>
+          <h2>{calculatorTitles[kind]}</h2>
           <p><strong>Measurement system:</strong> {systemName}</p>
           <h3>Inputs</h3>
           <ul>{inputLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
