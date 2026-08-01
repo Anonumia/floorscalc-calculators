@@ -20,6 +20,18 @@ const labels: Record<Kind, string> = {
   carpet: "Carpet",
 };
 const fmt = (n: number) => Number(n.toFixed(2)).toLocaleString();
+const differsFromWhole = (raw: number, whole: number) =>
+  Math.abs(whole - raw) > 1e-10;
+const pieceTerms: Record<"tile" | "vinyl" | "laminate" | "hardwood", { singular: string; plural: string }> = {
+  tile: { singular: "tile", plural: "tiles" },
+  vinyl: { singular: "plank", plural: "planks" },
+  laminate: { singular: "plank", plural: "planks" },
+  hardwood: { singular: "board", plural: "boards" },
+};
+const laminateDefaults = {
+  imperial: { length: 47.25, width: 7.5 },
+  metric: { length: 120, width: 19 },
+};
 const unitCopy: Record<
   Kind,
   Record<Unit, { method: string; example: string; tips: string }>
@@ -127,8 +139,20 @@ export default function Calculator({ kind }: { kind: Kind }) {
       { name: "Room 1", length: 10, width: 12 },
     ]);
   const [allowance, setAllowance] = useState(10),
-    [productL, setProductL] = useState(kind === "tile" ? 12 : 48),
-    [productW, setProductW] = useState(kind === "tile" ? 12 : 6);
+    [productL, setProductL] = useState(
+      kind === "tile"
+        ? 12
+        : kind === "laminate"
+          ? laminateDefaults.imperial.length
+          : 48,
+    ),
+    [productW, setProductW] = useState(
+      kind === "tile"
+        ? 12
+        : kind === "laminate"
+          ? laminateDefaults.imperial.width
+          : 6,
+    );
   const [packMode, setPackMode] = useState("coverage"),
     [packValue, setPackValue] = useState(""),
     [rollWidth, setRollWidth] = useState(12),
@@ -167,6 +191,35 @@ export default function Calculator({ kind }: { kind: Kind }) {
     e.preventDefault();
     setErrors(validation);
   };
+  const changeUnit = (nextUnit: Unit) => {
+    setUnit(nextUnit);
+    if (kind === "laminate") {
+      setProductL(laminateDefaults[nextUnit].length);
+      setProductW(laminateDefaults[nextUnit].width);
+    }
+  };
+  const terms =
+    kind === "tile" ||
+    kind === "vinyl" ||
+    kind === "laminate" ||
+    kind === "hardwood"
+      ? pieceTerms[kind]
+      : null;
+  const rawPieceTotal = result?.before
+    ? result.before * (1 + allowance / 100)
+    : undefined;
+  const pieceWasRounded =
+    rawPieceTotal !== undefined && differsFromWhole(rawPieceTotal, result.total);
+  const coverage = packValue === "" ? undefined : Number(packValue);
+  const rawPackageTotal =
+    result?.packages && coverage
+      ? packMode === "pieces" && !["general", "hardwood"].includes(kind)
+        ? result.total / coverage
+        : result.finalArea / coverage
+      : undefined;
+  const packageWasRounded =
+    rawPackageTotal !== undefined &&
+    differsFromWhole(rawPackageTotal, result.packages);
   return (
     <section className="calculator" aria-labelledby="tool-title">
       <h2 id="tool-title">{labels[kind]} calculator</h2>
@@ -177,7 +230,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
             <input
               type="radio"
               checked={unit === "imperial"}
-              onChange={() => setUnit("imperial")}
+              onChange={() => changeUnit("imperial")}
             />{" "}
             Imperial
           </label>
@@ -185,7 +238,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
             <input
               type="radio"
               checked={unit === "metric"}
-              onChange={() => setUnit("metric")}
+              onChange={() => changeUnit("metric")}
             />{" "}
             Metric
           </label>
@@ -318,8 +371,9 @@ export default function Calculator({ kind }: { kind: Kind }) {
               onChange={(e) => setPackValue(e.target.value)}
             />
             <small>
-              Enter the coverage printed on one hardwood carton. Leave blank if
-              you only need the total hardwood area.
+              Enter the coverage printed on one hardwood carton or shown on the
+              manufacturer product page. Leave blank if you only need the total
+              hardwood area.
             </small>
           </label>
         ) : (
@@ -352,7 +406,11 @@ export default function Calculator({ kind }: { kind: Kind }) {
                 onChange={(e) => setPackValue(e.target.value)}
               />
               <small>
-                Use the quantity or coverage printed on the product packaging.
+                {kind === "tile"
+                  ? "Use the tile count or coverage printed on the product box or manufacturer product page."
+                  : kind === "laminate"
+                    ? "Use the plank count or coverage printed on the laminate carton or manufacturer product page."
+                    : "Use the plank count or coverage printed on the vinyl flooring box or manufacturer product page."}
               </small>
             </label>
           </div>
@@ -377,7 +435,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
           </p>
         ))}
         <div className="actions">
-          <button type="submit">Update results</button>
+          <button type="submit">Calculate</button>
           <button
             type="button"
             className="secondary"
@@ -385,8 +443,20 @@ export default function Calculator({ kind }: { kind: Kind }) {
               setUnit("imperial");
               setRooms([{ name: "Room 1", length: 10, width: 12 }]);
               setAllowance(10);
-              setProductL(kind === "tile" ? 12 : 48);
-              setProductW(kind === "tile" ? 12 : 6);
+              setProductL(
+                kind === "tile"
+                  ? 12
+                  : kind === "laminate"
+                    ? laminateDefaults.imperial.length
+                    : 48,
+              );
+              setProductW(
+                kind === "tile"
+                  ? 12
+                  : kind === "laminate"
+                    ? laminateDefaults.imperial.width
+                    : 6,
+              );
               setPackMode("coverage");
               setPackValue("");
               setRollWidth(12);
@@ -436,22 +506,25 @@ export default function Calculator({ kind }: { kind: Kind }) {
             {result.pieceArea && (
               <>
                 <div>
-                  <dt>Individual piece area</dt>
+                  <dt>Individual {terms?.singular} area</dt>
                   <dd>
                     {fmt(result.pieceArea)} {areaUnit}
                   </dd>
                 </div>
                 <div>
-                  <dt>Pieces before allowance</dt>
+                  <dt>{terms?.plural[0].toUpperCase()}{terms?.plural.slice(1)} before allowance</dt>
                   <dd>{fmt(result.before)}</dd>
                 </div>
                 <div>
-                  <dt>Allowance piece quantity</dt>
+                  <dt>Additional {terms?.plural} from allowance</dt>
                   <dd>{fmt(result.allowancePieces)}</dd>
                 </div>
                 <div>
-                  <dt>Whole pieces required</dt>
-                  <dd>{result.total} (rounded up)</dd>
+                  <dt>Whole {terms?.plural} required</dt>
+                  <dd>
+                    {result.total}
+                    {pieceWasRounded ? " (rounded up)" : ""}
+                  </dd>
                 </div>
               </>
             )}
@@ -465,11 +538,14 @@ export default function Calculator({ kind }: { kind: Kind }) {
                   required
                 </dt>
                 <dd>
-                  {result.packages} (rounded up to whole{" "}
-                  {kind === "hardwood" || kind === "laminate"
-                    ? "cartons"
-                    : "boxes"}
-                  )
+                  {result.packages}
+                  {packageWasRounded
+                    ? ` (rounded up to whole ${
+                        kind === "hardwood" || kind === "laminate"
+                          ? "cartons"
+                          : "boxes"
+                      })`
+                    : ""}
                 </dd>
               </div>
             )}
@@ -513,9 +589,17 @@ export default function Calculator({ kind }: { kind: Kind }) {
         <h2>Exact calculation method</h2>
         <p>
           {unitCopy[kind][unit].method}{" "}
-          {kind === "carpet"
-            ? "Internal calculations retain full precision. Estimated roll lengths are displayed using practical planning values."
-            : "Internal calculations retain full precision; final pieces, boxes, and cartons round up where applicable."}
+          {kind === "general"
+            ? "Internal calculations retain full precision. Box quantities are rounded up to the next whole box when box coverage is provided."
+            : kind === "carpet"
+              ? "Internal calculations retain full precision. Estimated roll lengths and material quantities are displayed as planning values."
+              : kind === "tile"
+                ? "Internal calculations retain full precision. Final tile and box quantities are rounded up only when a whole purchase quantity requires it."
+                : kind === "vinyl"
+                  ? "Internal calculations retain full precision. Final plank and box quantities are rounded up only when a whole purchase quantity requires it."
+                  : kind === "laminate"
+                    ? "Internal calculations retain full precision. Final plank and carton quantities are rounded up only when a whole purchase quantity requires it."
+                    : "Internal calculations retain full precision. Final board and carton quantities are rounded up only when a whole purchase quantity requires it."}
         </p>
         <h2>Worked example</h2>
         <p>{unitCopy[kind][unit].example}</p>

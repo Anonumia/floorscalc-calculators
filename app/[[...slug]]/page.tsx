@@ -28,7 +28,6 @@ function Header() {
           <Link href="/calculators">Calculators</Link>
           <Link href="/guides">Guides</Link>
           <Link href="/about">About</Link>
-          <Link href="/contact">Contact</Link>
         </nav>
       </header>
     </>
@@ -47,8 +46,8 @@ function Footer() {
         <Link href="/terms">Terms of Use</Link>
       </nav>
       <p>
-        © {new Date().getFullYear()} {siteConfig.name}. Planning tools, not
-        professional advice.
+        © {new Date().getFullYear()} {siteConfig.name}. Free flooring planning
+        calculators. Results are estimates, not professional advice.
       </p>
     </footer>
   );
@@ -260,10 +259,9 @@ export default async function Page({
         <section>
           <h2>Inputs and results</h2>
           <p>
-            Enter each rectangular area, choose Imperial or Metric, and adjust
-            the visible material allowance. Box or carton information is
-            optional and user-entered. Results separate measured area,
-            allowance, final area, and whole purchase quantities.
+            {calcKinds[slug] === "general"
+              ? "Enter each rectangular area, choose Imperial or Metric, and adjust the visible material allowance. Box coverage is optional and should be entered from the manufacturer's product packaging or product page. Results separate measured area, allowance, final area, and whole box quantities."
+              : "Enter each rectangular area, choose Imperial or Metric, and adjust the visible material allowance. Product packaging information is optional and should come from the product box, carton, or manufacturer product page. Results separate measured area, allowance, final area, and whole purchase quantities."}
           </p>
           <h2>Limitations and assumptions</h2>
           <p>
@@ -289,14 +287,16 @@ export default async function Page({
           material allowances, and interpret flooring quantities before
           purchasing.
         </p>
-        <h2>How to Measure a Room for Flooring</h2>
+        <h2 id="measure-room">How to Measure a Room for Flooring</h2>
         <p>
           Sketch the room and divide L-shaped or irregular spaces into
           rectangles. Measure each rectangle at its longest and widest points,
           multiply length by width, then add the areas. Measure closets and
           alcoves separately when they will receive flooring.
         </p>
-        <h2>How Much Flooring Allowance Should You Add?</h2>
+        <h2 id="material-allowance">
+          How Much Flooring Allowance Should You Add?
+        </h2>
         <p>
           Material allowance covers cuts, damaged pieces, product defects, and
           layout needs. The calculators use 10% as an editable starting point
@@ -305,14 +305,14 @@ export default async function Page({
           instructions, and installer recommendations may require a different
           percentage.
         </p>
-        <h2>Square Feet vs Square Yards</h2>
+        <h2 id="square-feet-vs-square-yards">Square Feet vs Square Yards</h2>
         <p>
           Hard flooring is commonly measured in square feet, while carpet may
           also be described in square yards. One square yard equals nine square
           feet. Convert square feet to square yards by dividing the total area
           by nine—not by dividing each room dimension by nine.
         </p>
-        <h2>How Flooring Box Coverage Works</h2>
+        <h2 id="box-coverage">How Flooring Box Coverage Works</h2>
         <p>
           Box or carton coverage is the finished area the packaged product is
           intended to cover. Coverage differs by manufacturer and product
@@ -320,7 +320,9 @@ export default async function Page({
           each box vary. Use the coverage printed on the exact packaging or
           product page rather than assuming a standard box size.
         </p>
-        <h2>Why Carpet Estimates Are Different from Boxed Flooring</h2>
+        <h2 id="carpet-estimates">
+          Why Carpet Estimates Are Different from Boxed Flooring
+        </h2>
         <p>
           Carpet is cut from rolls, so room area alone does not determine an
           efficient layout. Roll width, direction, seams, pattern matching,
@@ -328,21 +330,21 @@ export default async function Page({
           required length. Treat online carpet results as preliminary planning
           estimates.
         </p>
-        <h2>Choosing Imperial vs Metric</h2>
+        <h2 id="imperial-vs-metric">Choosing Imperial vs Metric</h2>
         <p>
           Choose the system used by your tape measure and product packaging.
           Imperial mode uses feet, inches, square feet, and square yards where
           useful. Metric mode uses meters, centimeters, and square meters. Keep
           every input in the selected system rather than mixing units.
         </p>
-        <h2>Why Quantities Are Rounded Up</h2>
+        <h2 id="rounding-up">Why Quantities Are Rounded Up</h2>
         <p>
           Stores normally sell whole tiles, planks, boards, boxes, and cartons.
           A calculated need of 5.01 boxes still requires 6 whole boxes, so
           purchase quantities are rounded up only after the full-precision
           calculation is complete.
         </p>
-        <h2>Common Measuring Mistakes</h2>
+        <h2 id="measuring-mistakes">Common Measuring Mistakes</h2>
         <p>
           Common errors include omitting closets, mixing feet and inches,
           measuring only one side of an irregular room, rounding dimensions too
@@ -350,7 +352,7 @@ export default async function Page({
           keep units consistent, and verify the final measurements before
           ordering.
         </p>
-        <h2>Ready to Calculate?</h2>
+        <h2 id="ready-to-calculate">Ready to Calculate?</h2>
         <p>
           Use your measurements with the calculator designed for your flooring
           material.
@@ -381,6 +383,10 @@ export default async function Page({
           We do not sell flooring, provide quotes, estimate prices, or replace
           product-specific advice from a manufacturer or qualified installer.
         </p>
+        <p>
+          {siteConfig.name} is independently developed and is not affiliated
+          with any flooring manufacturer or retailer.
+        </p>
       </article>
     );
   else if (slug === "contact")
@@ -389,7 +395,7 @@ export default async function Page({
         <h1>Contact {siteConfig.name}</h1>
         <p>
           Send a question, correction, or suggestion about the site. For a
-          calculation issue, include the calculator name, measurement system
+          calculation issues, include the calculator name, measurement system
           (Imperial or Metric), your inputs, the result you expected, and the
           result displayed by the calculator.
         </p>
@@ -465,6 +471,10 @@ export default async function Page({
           ask about a submitted message through the Contact page. Legal rights
           may vary by location.
         </p>
+        <p>
+          {siteConfig.name} is a general-purpose flooring planning website and
+          is not directed to children.
+        </p>
         <h2>Policy changes</h2>
         <p>
           We may revise this policy when site practices change. The current
@@ -509,6 +519,13 @@ export default async function Page({
           account for every manufacturer-specific installation requirement,
           product defect, cut, or layout decision.
         </p>
+        <h2>Calculation Accuracy</h2>
+        <p>
+          {siteConfig.name} uses standard mathematical formulas together with
+          user-provided measurements. Flooring products, installation methods,
+          and manufacturer specifications vary, so users should always verify
+          final quantities before purchasing materials.
+        </p>
         <h2>No warranty</h2>
         <p>
           The site is provided “as is” and “as available,” without warranties of
@@ -531,8 +548,9 @@ export default async function Page({
         <h2>Acceptable use</h2>
         <p>
           Do not interfere with the service, attempt unauthorized access, submit
-          malicious material, abuse the contact form, scrape it in a harmful
-          manner, or misrepresent its results.
+          malicious material, abuse the contact form, or scrape, copy, or reuse
+          site content in a manner that harms the service or misrepresents its
+          results.
         </p>
         <h2>Service changes</h2>
         <p>
