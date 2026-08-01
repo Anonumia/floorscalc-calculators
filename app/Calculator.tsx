@@ -285,6 +285,26 @@ export default function Calculator({ kind }: { kind: Kind }) {
       `Estimated roll material: ${fmt(result.materialArea)} ${areaUnit}`,
     ] : []),
   ] : [];
+  const copyResultLines = result ? [
+    `Combined measured area: ${fmt(result.measured)} ${areaUnit}`,
+    ...(kind === "general" && unit === "imperial"
+      ? [`Measured area in square yards: ${fmt(result.measured / 9)} sq yd`]
+      : []),
+    `Material allowance (${allowance}%): ${fmt(result.allowanceArea)} ${areaUnit}`,
+    `Final material area: ${fmt(result.finalArea)} ${areaUnit}`,
+    ...(result.total
+      ? [`Whole ${terms?.plural} required: ${result.total}${pieceWasRounded ? " (rounded up)" : ""}`]
+      : []),
+    ...(result.packages
+      ? [`Whole ${packageTerm} required: ${result.packages}${packageWasRounded ? ` (rounded up to whole ${packageTerm})` : ""}`]
+      : []),
+    ...(kind === "carpet"
+      ? [
+          `Estimated carpet roll length: ${fmt(result.length)} ${lengthUnit}`,
+          `Estimated roll material: ${fmt(result.materialArea)} ${areaUnit}`,
+        ]
+      : []),
+  ] : [];
   const inputLines = [
     ...rooms.map((room, i) => `${room.name || `Room ${i + 1}`}: ${fmt(room.length)} ${lengthUnit} × ${fmt(room.width)} ${lengthUnit}`),
     ...(!["general", "carpet"].includes(kind) ? [`${terms?.singular[0].toUpperCase()}${terms?.singular.slice(1)} dimensions: ${fmt(productL)} ${productUnit} × ${fmt(productW)} ${productUnit}`] : []),
@@ -300,7 +320,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
       copyCalculatorTitles[kind],
       `Measurement system: ${systemName}`,
       ["INPUTS", ...inputLines].join("\n"),
-      ["RESULT BREAKDOWN", ...resultLines].join("\n"),
+      ["RESULTS", ...copyResultLines].join("\n"),
       disclaimerLines.join("\n"),
       "floorscalc.com",
     ].join("\n\n");
