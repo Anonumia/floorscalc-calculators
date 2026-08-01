@@ -27,6 +27,14 @@ const calculatorTitles: Record<Kind, string> = {
   hardwood: "Hardwood Calculator",
   carpet: "Carpet Calculator",
 };
+const copyCalculatorTitles: Record<Kind, string> = {
+  general: "General Flooring Calculator",
+  tile: "Tile Calculator",
+  vinyl: "Vinyl Plank Calculator",
+  laminate: "Laminate Flooring Calculator",
+  hardwood: "Hardwood Flooring Calculator",
+  carpet: "Carpet Calculator",
+};
 const fmt = (n: number) => Number(n.toFixed(2)).toLocaleString();
 const selectNumericValue = (event: React.FocusEvent<HTMLInputElement>) =>
   event.currentTarget.select();
@@ -287,7 +295,15 @@ export default function Calculator({ kind }: { kind: Kind }) {
   const copyResults = async () => {
     if (!result) return;
     const disclaimerLines = planningDisclaimer.split(/(?<=only\.) /);
-    const text = ["FloorsCalc", calculatorTitles[kind], `Measurement system: ${systemName}`, "Inputs", ...inputLines, "Result Breakdown", ...resultLines, ...disclaimerLines].join("\n\n");
+    const text = [
+      "FloorsCalc",
+      copyCalculatorTitles[kind],
+      `Measurement system: ${systemName}`,
+      ["INPUTS", ...inputLines].join("\n"),
+      ["RESULT BREAKDOWN", ...resultLines].join("\n"),
+      disclaimerLines.join("\n"),
+      "floorscalc.com",
+    ].join("\n\n");
     await navigator.clipboard.writeText(text);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2200);
