@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./refinements.css";
+import { siteConfig } from "./site-config";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://floorwise-calculators.sites.openai.com"),
-  title: { default: "Floorwise Calculators", template: "%s | Floorwise Calculators" },
-  description: "Free, transparent flooring material calculators for tile, plank, laminate, hardwood, and carpet projects.",
+  metadataBase: new URL(siteConfig.url),
+  title: { default: `${siteConfig.name} — ${siteConfig.tagline}`, template: `%s | ${siteConfig.name}` },
+  description: siteConfig.description,
+  alternates: { canonical: "/" },
   icons: { icon: "/favicon.svg" },
-  openGraph: { title: "Floorwise Calculators", description: "Plan flooring materials with clear formulas and practical guidance.", type: "website" },
+  openGraph: { title: siteConfig.name, description: siteConfig.description, url: siteConfig.url, siteName: siteConfig.name, type: "website" },
+  twitter: { card: "summary", title: siteConfig.name, description: siteConfig.description },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

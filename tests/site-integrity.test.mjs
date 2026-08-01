@@ -1,0 +1,7 @@
+import test from "node:test";import assert from "node:assert/strict";import {readFile} from "node:fs/promises";
+const files=await Promise.all(["app/layout.tsx","app/[[...slug]]/page.tsx","app/sitemap.ts","app/robots.ts","app/guides/[slug]/page.tsx"].map(async p=>[p,await readFile(p,"utf8")]));const source=files.map(x=>x[1]).join("\n");
+test("old brand and old domain are absent",()=>{assert.doesNotMatch(source,/Floorwise|floorwise-calculators\.sites\.openai/i)});
+test("production domain is centralized",async()=>{const config=await readFile("app/site-config.ts","utf8");assert.match(config,/https:\/\/floorscalc\.com/);assert.match(config,/FloorsCalc/)});
+test("all internal literal links point to known pages",()=>{const links=[...source.matchAll(/href="(\/[^"]*)"/g)].map(x=>x[1]);const known=new Set(["/","/calculators","/guides","/about","/contact","/privacy","/terms","/general-flooring-calculator"]);for(const link of links)assert.ok(known.has(link),`Unknown internal link: ${link}`)});
+test("SEO endpoints and custom 404 exist",async()=>{for(const path of ["app/sitemap.ts","app/robots.ts","app/not-found.tsx"])assert.ok((await readFile(path,"utf8")).length>20)});
+test("contact route protects secrets and spam",async()=>{const route=await readFile("app/api/contact/route.ts","utf8");assert.match(route,/RESEND_API_KEY/);assert.match(route,/CONTACT_EMAIL/);assert.match(route,/CONTACT_FROM_EMAIL/);assert.match(route,/website/);assert.match(route,/LIMIT=5/)});

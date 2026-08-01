@@ -1,1 +1,1 @@
-import type { MetadataRoute } from "next";export default function robots():MetadataRoute.Robots{return {rules:{userAgent:"*",allow:"/"},sitemap:"https://floorwise-calculators.sites.openai.com/sitemap.xml"}}
+import type { MetadataRoute } from "next";import {siteConfig} from "./site-config";export default function robots():MetadataRoute.Robots{return {rules:{userAgent:"*",allow:"/"},sitemap:`${siteConfig.url}/sitemap.xml`}}

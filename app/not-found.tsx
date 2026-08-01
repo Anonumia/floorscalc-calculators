@@ -1,0 +1,2 @@
+import Link from "next/link";import {siteConfig} from "./site-config";
+export default function NotFound(){return <><header><Link className="brand" href="/">{siteConfig.name}</Link></header><main><article className="reading"><p className="eyebrow">404 error</p><h1>Page not found</h1><p>The page may have moved, or the address may be incorrect.</p><Link className="button" href="/calculators">View all calculators</Link></article></main></>}
