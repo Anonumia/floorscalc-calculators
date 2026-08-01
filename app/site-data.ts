@@ -6,10 +6,3 @@ export const calculators = [
   ["hardwood-flooring-calculator","Hardwood Flooring Calculator","Plan hardwood area, fixed boards, and cartons without false precision."],
   ["carpet-calculator","Carpet Calculator","Create a preliminary roll-width planning estimate."],
 ] as const;
-export const guides = [
-  ["how-to-measure-a-room","How to Measure a Room for Flooring"],
-  ["flooring-material-allowance","How Much Flooring Allowance Should You Add?"],
-  ["square-feet-vs-square-yards","Square Feet Versus Square Yards for Flooring"],
-  ["flooring-box-coverage","How Flooring Box Coverage Works"],
-  ["why-carpet-estimates-differ","Why Carpet Estimates Are Different From Boxed Flooring"],
-] as const;
