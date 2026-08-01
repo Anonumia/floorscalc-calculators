@@ -8,6 +8,8 @@ test("laminate",()=>{const r=calc.areaResult([{length:14,width:11}],10,21.5);ass
 test("hardwood",()=>{const r=calc.areaResult([{length:15,width:16}],10,20);assert.deepEqual([r.finalArea,r.packages],[264,14])});
 test("metric",()=>{const r=calc.areaResult([{length:4,width:5}],10,2.2);assert.deepEqual([r.measured,r.allowanceArea,r.finalArea,r.packages],[20,2,22,10])});
 test("rounding",()=>assert.equal(calc.areaResult([{length:100.01,width:1}],0,20).packages,6));
+test("blank box coverage keeps area result and omits boxes",()=>{const r=calc.areaResult([{length:10,width:12}],10);assert.equal(r.finalArea,132);assert.equal(r.packages,undefined)});
+test("valid box coverage produces whole boxes",()=>{const r=calc.areaResult([{length:10,width:12}],10,22.45);assert.equal(r.packages,6)});
 test("validation",()=>{for(const fn of [()=>calc.areaResult([{length:0,width:1}],10),()=>calc.areaResult([{length:-1,width:1}],10),()=>calc.areaResult([{length:1,width:1}],-1),()=>calc.areaResult([{length:1,width:1}],10,0)])assert.throws(fn)});
 test("carpet narrower than roll",()=>{const r=calc.carpetResult([{length:10,width:11}],12,10);assert.equal(r.length,11);assert.equal(r.materialArea,132)});
 test("carpet wider, custom roll",()=>{const r=calc.carpetResult([{length:10,width:13}],12,0);assert.equal(r.length,20)});
