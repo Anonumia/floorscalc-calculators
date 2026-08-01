@@ -54,7 +54,7 @@ function Footer() {
 }
 
 const titles: Record<string, string> = {
-  "": "Free Flooring Material Calculators",
+  "": "Free Flooring Calculators",
   calculators: "All Flooring Calculators",
   guides: "Flooring Measurement Guides",
   about: "About",
