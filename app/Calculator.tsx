@@ -316,13 +316,10 @@ export default function Calculator({ kind }: { kind: Kind }) {
     if (!result) return;
     const disclaimerLines = planningDisclaimer.split(/(?<=only\.) /);
     const text = [
-      "FloorsCalc",
-      copyCalculatorTitles[kind],
-      `Measurement system: ${systemName}`,
+      ["FloorsCalc", copyCalculatorTitles[kind], `Measurement system: ${systemName}`].join("\n"),
       ["INPUTS", ...inputLines].join("\n"),
       ["RESULTS", ...copyResultLines].join("\n"),
-      disclaimerLines.join("\n"),
-      "floorscalc.com",
+      [...disclaimerLines, "floorscalc.com"].join("\n"),
     ].join("\n\n");
     await navigator.clipboard.writeText(text);
     setCopied(true);
