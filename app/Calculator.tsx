@@ -297,6 +297,12 @@ export default function Calculator({ kind }: { kind: Kind }) {
     : kind === "carpet"
       ? `Roll length: ${fmt(result.length)} ${lengthUnit} · Material: ${fmt(result.materialArea)} ${areaUnit}`
       : `${result.total} ${terms?.plural}${result.packages ? ` · ${result.packages} ${packageTerm}` : ""}` : "";
+  const printRow = (line: string, index: number) => {
+    const separator = line.indexOf(":");
+    const label = separator === -1 ? line : line.slice(0, separator);
+    const value = separator === -1 ? "" : line.slice(separator + 1).trim();
+    return <div className="print-row" key={index}><dt>{label}</dt><dd>{value}</dd></div>;
+  };
   return (
     <section className={`calculator${result ? " has-sticky-result" : ""}`} aria-labelledby="tool-title">
       <h2 id="tool-title">{labels[kind]} calculator</h2>
@@ -691,14 +697,18 @@ export default function Calculator({ kind }: { kind: Kind }) {
       )}
       {result && (
         <section className="print-summary" aria-label="Printable calculation summary">
-          <h1>FloorsCalc</h1>
-          <h2>{calculatorTitles[kind]}</h2>
-          <p><strong>Measurement system:</strong> {systemName}</p>
+          <header className="print-report-header">
+            <p className="print-brand">FloorsCalc</p>
+            <h1>{calculatorTitles[kind]}</h1>
+          </header>
+          <h2>Measurement System</h2>
+          <p className="print-system">{systemName}</p>
           <h3>Inputs</h3>
-          <ul>{inputLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
+          <dl>{inputLines.map(printRow)}</dl>
           <h3>Result Breakdown</h3>
-          <ul>{resultLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
-          <p>{planningDisclaimer}</p>
+          <dl>{resultLines.map(printRow)}</dl>
+          <div className="print-disclaimer">{planningDisclaimer.split(/(?<=only\.) /).map((line, i) => <p key={i}>{line}</p>)}</div>
+          <p className="print-url">www.floorscalc.com</p>
         </section>
       )}
       {result && (
