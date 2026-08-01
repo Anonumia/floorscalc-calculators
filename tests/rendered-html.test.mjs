@@ -42,9 +42,10 @@ test("contact page contains the complete private submission form", async () => {
 });
 
 test("SEO outputs are generated", async () => {
-  assert.match(await read("robots.txt"), /Sitemap: https:\/\/floorscalc\.com\/sitemap-index\.xml/);
-  const sitemap = await read("sitemap-0.xml");
-  for (const path of ["/calculators/", "/tile-calculator/", "/guides/", "/privacy/"]) {
-    assert.match(sitemap, new RegExp(path.replaceAll("/", "\\/")));
+  assert.match(await read("robots.txt"), /Sitemap: https:\/\/floorscalc\.com\/sitemap\.xml/);
+  const sitemap = await read("sitemap.xml");
+  for (const path of ["/calculators", "/tile-calculator", "/guides", "/privacy"]) {
+    assert.match(sitemap, new RegExp(`<loc>https:\\/\\/floorscalc\\.com${path.replaceAll("/", "\\/")}<\\/loc>`));
   }
+  assert.equal((sitemap.match(/<url>/g) || []).length, 13);
 });
