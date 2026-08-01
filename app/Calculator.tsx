@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   areaResult,
   carpetResult,
@@ -134,6 +134,7 @@ const unitCopy: Record<
   },
 };
 export default function Calculator({ kind }: { kind: Kind }) {
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [unit, setUnit] = useState<Unit>("imperial"),
     [rooms, setRooms] = useState<Room[]>([
       { name: "Room 1", length: 10, width: 12 },
@@ -156,7 +157,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
   const [packMode, setPackMode] = useState("coverage"),
     [packValue, setPackValue] = useState(""),
     [rollWidth, setRollWidth] = useState(12),
-    [errors, setErrors] = useState<string[]>([]);
+    [copied, setCopied] = useState(false);
   const areaUnit = unit === "imperial" ? "sq ft" : "m²",
     lengthUnit = unit === "imperial" ? "ft" : "m";
   function update(i: number, key: keyof Room, value: string) {
@@ -187,10 +188,6 @@ export default function Calculator({ kind }: { kind: Kind }) {
   } catch (e) {
     validation.push((e as Error).message);
   }
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors(validation);
-  };
   const changeUnit = (nextUnit: Unit) => {
     setUnit(nextUnit);
     if (kind === "laminate") {
@@ -220,10 +217,54 @@ export default function Calculator({ kind }: { kind: Kind }) {
   const packageWasRounded =
     rawPackageTotal !== undefined &&
     differsFromWhole(rawPackageTotal, result.packages);
+  const packageTerm = kind === "hardwood" || kind === "laminate" ? "cartons" : "boxes";
+  const systemName = unit === "imperial" ? "Imperial" : "Metric";
+  const productUnit = unit === "imperial" ? "in" : "cm";
+  const planningDisclaimer = kind === "carpet"
+    ? "Planning estimate only. An installer should confirm roll direction, seams, pattern matching, and layout."
+    : "Planning estimate only. Confirm product coverage and installation requirements before purchasing.";
+  const resultLines = result ? [
+    ...result.areas.map((a: number, i: number) => `${rooms[i].name || `Area ${i + 1}`}: ${fmt(a)} ${areaUnit}`),
+    `Combined measured area: ${fmt(result.measured)} ${areaUnit}`,
+    ...(unit === "imperial" ? [`Measured area in square yards: ${fmt(result.measured / 9)} sq yd`] : []),
+    `Material allowance (${allowance}%): ${fmt(result.allowanceArea)} ${areaUnit}`,
+    `Final material area: ${fmt(result.finalArea)} ${areaUnit}`,
+    ...(result.pieceArea ? [
+      `Individual ${terms?.singular} area: ${fmt(result.pieceArea)} ${areaUnit}`,
+      `${terms?.plural[0].toUpperCase()}${terms?.plural.slice(1)} before allowance: ${fmt(result.before)}`,
+      `Additional ${terms?.plural} from allowance: ${fmt(result.allowancePieces)}`,
+      `Whole ${terms?.plural} required: ${result.total}${pieceWasRounded ? " (rounded up)" : ""}`,
+    ] : []),
+    ...(result.packages ? [`Whole ${packageTerm} required: ${result.packages}${packageWasRounded ? ` (rounded up to whole ${packageTerm})` : ""}`] : []),
+    ...(kind === "carpet" ? [
+      `Selected roll width: ${fmt(result.rollWidth)} ${lengthUnit}`,
+      `Estimated carpet roll length: ${fmt(result.length)} ${lengthUnit}`,
+      `Estimated roll material: ${fmt(result.materialArea)} ${areaUnit}`,
+    ] : []),
+  ] : [];
+  const inputLines = [
+    ...rooms.map((room, i) => `${room.name || `Room ${i + 1}`}: ${fmt(room.length)} ${lengthUnit} × ${fmt(room.width)} ${lengthUnit}`),
+    ...(!["general", "carpet"].includes(kind) ? [`${terms?.singular[0].toUpperCase()}${terms?.singular.slice(1)} dimensions: ${fmt(productL)} ${productUnit} × ${fmt(productW)} ${productUnit}`] : []),
+    ...(kind === "carpet" ? [`Carpet roll width: ${fmt(rollWidth)} ${lengthUnit}`] : []),
+    ...(packValue !== "" ? [`${packMode === "pieces" && !["general", "hardwood"].includes(kind) ? `${kind === "tile" ? "Tiles" : "Planks"} per ${packageTerm.slice(0, -1)}` : `Coverage per ${packageTerm.slice(0, -1)}`}: ${packValue}${packMode === "coverage" || ["general", "hardwood"].includes(kind) ? ` ${areaUnit}` : ""}`] : []),
+    `Material allowance: ${allowance}%`,
+  ];
+  const copyResults = async () => {
+    if (!result) return;
+    const text = ["FloorsCalc", `${labels[kind]} calculator`, `Measurement system: ${systemName}`, "", "Inputs", ...inputLines, "", "Result Breakdown", ...resultLines, "", planningDisclaimer].join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2200);
+  };
+  const stickyPrimary = result ? kind === "general" || kind === "hardwood"
+    ? `Final area: ${fmt(result.finalArea)} ${areaUnit}${result.packages ? ` · ${result.packages} ${packageTerm}` : ""}`
+    : kind === "carpet"
+      ? `Roll length: ${fmt(result.length)} ${lengthUnit} · Material: ${fmt(result.materialArea)} ${areaUnit}`
+      : `${result.total} ${terms?.plural}${result.packages ? ` · ${result.packages} ${packageTerm}` : ""}` : "";
   return (
-    <section className="calculator" aria-labelledby="tool-title">
+    <section className={`calculator${result ? " has-sticky-result" : ""}`} aria-labelledby="tool-title">
       <h2 id="tool-title">{labels[kind]} calculator</h2>
-      <form onSubmit={submit} noValidate>
+      <form noValidate>
         <fieldset className="unit-toggle">
           <legend>Measurement system</legend>
           <label>
@@ -429,13 +470,12 @@ export default function Calculator({ kind }: { kind: Kind }) {
             10% is a recommended starting point, not a hidden assumption.
           </small>
         </label>
-        {errors.map((x, i) => (
+        {validation.map((x, i) => (
           <p className="error" role="alert" key={i}>
             {x}
           </p>
         ))}
         <div className="actions">
-          <button type="submit">Calculate</button>
           <button
             type="button"
             className="secondary"
@@ -460,7 +500,6 @@ export default function Calculator({ kind }: { kind: Kind }) {
               setPackMode("coverage");
               setPackValue("");
               setRollWidth(12);
-              setErrors([]);
             }}
           >
             Reset
@@ -468,7 +507,7 @@ export default function Calculator({ kind }: { kind: Kind }) {
         </div>
       </form>
       {result && (
-        <div className="results" aria-live="polite">
+        <div className="results screen-results" id="result-breakdown" ref={resultsRef} aria-live="polite">
           <h3>Result breakdown</h3>
           <dl>
             {result.areas.map((a: number, i: number) => (
@@ -572,9 +611,11 @@ export default function Calculator({ kind }: { kind: Kind }) {
               </>
             )}
           </dl>
-          <button type="button" onClick={() => window.print()}>
-            Print results
-          </button>
+          <div className="result-actions">
+            <button type="button" onClick={copyResults}>Copy Results</button>
+            <button type="button" className="print-results" onClick={() => window.print()}>Print Results</button>
+          </div>
+          <p className="copy-status" role="status" aria-live="polite">{copied ? "Results copied" : ""}</p>
           {kind === "carpet" && (
             <p className="notice">
               <strong>Planning estimate:</strong> actual requirements may change
@@ -584,6 +625,28 @@ export default function Calculator({ kind }: { kind: Kind }) {
             </p>
           )}
         </div>
+      )}
+      {result && (
+        <section className="print-summary" aria-label="Printable calculation summary">
+          <h1>FloorsCalc</h1>
+          <h2>{labels[kind]} calculator</h2>
+          <p><strong>Measurement system:</strong> {systemName}</p>
+          <h3>Inputs</h3>
+          <ul>{inputLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
+          <h3>Result Breakdown</h3>
+          <ul>{resultLines.map((line, i) => <li key={i}>{line}</li>)}</ul>
+          <p>{planningDisclaimer}</p>
+        </section>
+      )}
+      {result && (
+        <button
+          type="button"
+          className="mobile-sticky-result"
+          aria-label={`View result breakdown. ${stickyPrimary}`}
+          onClick={() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        >
+          <span>Current result</span><strong>{stickyPrimary}</strong>
+        </button>
       )}
       <div className="unit-content" data-unit={unit}>
         <h2>Exact calculation method</h2>
