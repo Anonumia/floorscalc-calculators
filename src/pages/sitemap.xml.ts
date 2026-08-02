@@ -22,7 +22,11 @@ const escapeXml = (value: string) => value
 
 export const GET: APIRoute = () => {
   const urls = paths
-    .map((path) => `  <url><loc>${escapeXml(new URL(path || "/", `${siteConfig.url}/`).toString())}</loc></url>`)
+    .map((path) => [
+      "  <url>",
+      `    <loc>${escapeXml(new URL(path || "/", `${siteConfig.url}/`).toString())}</loc>`,
+      "  </url>",
+    ].join("\n"))
     .join("\n");
 
   return new Response(

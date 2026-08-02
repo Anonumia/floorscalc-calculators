@@ -44,10 +44,21 @@ test("contact page contains the complete private submission form", async () => {
 test("SEO outputs are generated", async () => {
   assert.match(await read("robots.txt"), /Sitemap: https:\/\/floorscalc\.com\/sitemap\.xml/);
   const sitemap = await read("sitemap.xml");
-  for (const path of ["/calculators", "/tile-calculator", "/guides", "/privacy"]) {
+  assert.match(sitemap, /^<\?xml version="1\.0" encoding="UTF-8"\?>\n/);
+  assert.match(sitemap, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  const paths = [
+    "/", "/calculators", "/general-flooring-calculator", "/tile-calculator",
+    "/vinyl-plank-calculator", "/laminate-flooring-calculator",
+    "/hardwood-flooring-calculator", "/carpet-calculator", "/guides",
+    "/about", "/contact", "/privacy", "/terms",
+  ];
+  for (const path of paths) {
     assert.match(sitemap, new RegExp(`<loc>https:\\/\\/floorscalc\\.com${path.replaceAll("/", "\\/")}<\\/loc>`));
   }
   assert.equal((sitemap.match(/<url>/g) || []).length, 13);
+  assert.equal((sitemap.match(/<loc>/g) || []).length, 13);
+  assert.doesNotMatch(sitemap, /pages\.dev/);
+  assert.match(await read("_headers"), /\/sitemap\.xml\s+Content-Type: application\/xml; charset=UTF-8/);
 });
 
 test("public pages have unique metadata and a single primary heading", async () => {
