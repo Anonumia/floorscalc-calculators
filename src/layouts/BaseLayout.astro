@@ -12,7 +12,7 @@ interface Props {
 const { title, description, path } = Astro.props;
 const pageTitle = `${title} | ${siteConfig.name}`;
 const canonical = new URL(path || "/", siteConfig.url).toString();
-const socialImage = new URL("/og.png", siteConfig.url).toString();
+const socialImage = new URL("/og.jpg", siteConfig.url).toString();
 ---
 <!doctype html>
 <html lang="en">
@@ -34,6 +34,7 @@ const socialImage = new URL("/og.png", siteConfig.url).toString();
     <meta property="og:description" content={description} />
     <meta property="og:image" content={socialImage} />
     <meta property="og:image:secure_url" content={socialImage} />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="FloorsCalc — Measure once. Plan with confidence." />
