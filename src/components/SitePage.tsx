@@ -55,8 +55,9 @@ function Footer() {
   );
 }
 
-const Cards = () => (
-  <div className="cards">
+const Cards = ({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) => {
+  const CardHeading = `h${headingLevel}` as "h2" | "h3";
+  return <div className="cards">
     {calculators.map(([slug, title, desc], i) => (
       <Link
         className={i === 0 ? "card featured" : "card"}
@@ -64,13 +65,13 @@ const Cards = () => (
         key={slug}
       >
         <small>{i === 0 ? "Start here" : "Calculator"}</small>
-        <h3>{title}</h3>
+        <CardHeading style={{ fontSize: "1.25rem", margin: ".35rem 0" }}>{title}</CardHeading>
         <p>{desc}</p>
         <span>Open calculator →</span>
       </Link>
     ))}
-  </div>
-);
+  </div>;
+};
 const Related = ({ current }: { current: string }) => (
   <section>
     <h2>Related calculators</h2>
@@ -208,7 +209,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <p>
           Six practical tools for the most common flooring material questions.
         </p>
-        <Cards />
+        <Cards headingLevel={2} />
       </>
     );
   else if (calcKinds[slug]) {

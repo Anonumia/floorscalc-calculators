@@ -732,7 +732,12 @@ export default function Calculator({ kind }: { kind: Kind }) {
         <section className="print-summary" aria-label="Printable calculation summary">
           <header className="print-report-header">
             <p className="print-brand">FloorsCalc</p>
-            <h1>{calculatorTitles[kind]}</h1>
+            <div
+              className="print-report-title"
+              style={{ font: "700 16pt/1.2 Georgia,serif", margin: 0 }}
+            >
+              {calculatorTitles[kind]}
+            </div>
           </header>
           <h2>Measurement System</h2>
           <p className="print-system">{systemName}</p>

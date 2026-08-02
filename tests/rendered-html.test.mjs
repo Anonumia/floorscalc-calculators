@@ -49,3 +49,28 @@ test("SEO outputs are generated", async () => {
   }
   assert.equal((sitemap.match(/<url>/g) || []).length, 13);
 });
+
+test("public pages have unique metadata and a single primary heading", async () => {
+  const routes = [
+    "index.html", "calculators/index.html", "general-flooring-calculator/index.html",
+    "tile-calculator/index.html", "vinyl-plank-calculator/index.html",
+    "laminate-flooring-calculator/index.html", "hardwood-flooring-calculator/index.html",
+    "carpet-calculator/index.html", "guides/index.html", "about/index.html",
+    "contact/index.html", "privacy/index.html", "terms/index.html",
+  ];
+  const titles = new Set();
+  const descriptions = new Set();
+  for (const route of routes) {
+    const html = await read(route);
+    const title = html.match(/<title>(.*?)<\/title>/)?.[1];
+    const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1];
+    assert.ok(title, `${route} title`);
+    assert.ok(description, `${route} description`);
+    assert.ok(!titles.has(title), `${route} duplicate title`);
+    assert.ok(!descriptions.has(description), `${route} duplicate description`);
+    titles.add(title);
+    descriptions.add(description);
+    assert.equal((html.match(/<h1(?:\s[^>]*)?>/g) || []).length, 1, `${route} H1 count`);
+    assert.doesNotMatch(html, /<meta[^>]+(?:noindex|nofollow)/i, `${route} indexing directive`);
+  }
+});

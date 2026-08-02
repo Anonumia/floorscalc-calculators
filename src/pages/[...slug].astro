@@ -24,12 +24,16 @@ const titles: Record<string, string> = {
   terms: "Terms of Use",
 };
 const title = calculator?.[1] ?? titles[slug];
-const description = calculator?.[2]
-  ?? (slug === "guides"
-    ? "Practical flooring measurement guidance covering room area, material allowance, box coverage, carpet estimates, units, and rounding."
-    : slug === "contact"
-      ? `Contact ${siteConfig.name} about a calculator or site question.`
-      : siteConfig.description);
+const descriptions: Record<string, string> = {
+  "": siteConfig.description,
+  calculators: "Explore six free FloorsCalc tools for flooring area, tile, vinyl plank, laminate, hardwood, and carpet material planning.",
+  guides: "Practical flooring measurement guidance covering room area, material allowance, box coverage, carpet estimates, units, and rounding.",
+  about: "Learn how FloorsCalc provides transparent, practical flooring material estimates without pricing assumptions or hidden formulas.",
+  contact: `Contact ${siteConfig.name} with a question about a flooring calculator, calculation, guide, or the website.`,
+  privacy: "Read the FloorsCalc Privacy Policy covering contact-form information, technical data, cookies, security, and your privacy choices.",
+  terms: "Read the FloorsCalc Terms of Use for calculator estimates, acceptable use, intellectual property, and limitations of liability.",
+};
+const description = calculator?.[2] ?? descriptions[slug];
 const hydrated = Boolean(calculator) || slug === "contact";
 ---
 <BaseLayout title={title} description={description} path={slug ? `/${slug}` : "/"}>
