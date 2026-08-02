@@ -36,8 +36,8 @@ Cloudflare Pages automatically discovers `functions/api/contact.ts` and serves i
 
 Configure these encrypted environment variables for both Preview and Production in the Cloudflare Pages project:
 
-- `RESEND_API_KEY`
-- `CONTACT_EMAIL`
+- `BREVO_API_KEY`
+- `CONTACT_TO_EMAIL`
 - `CONTACT_FROM_EMAIL`
 
 Never prefix these values with `PUBLIC_`; they must remain available only to the Pages Function.
@@ -48,7 +48,7 @@ Never prefix these values with `PUBLIC_`; they must remain available only to the
 - `dist/<route>/index.html`: static content and calculator pages
 - `dist/_astro/`: hashed browser assets
 - `dist/robots.txt`: crawler policy
-- `dist/sitemap-index.xml` and `dist/sitemap-0.xml`: generated sitemap
+- `dist/sitemap.xml`: canonical public sitemap
 - `functions/api/contact.ts`: server-side Pages contact handler (deployed separately from `dist` by Pages)
 
 ## Architecture

@@ -7,7 +7,7 @@ const request = (body, ip = "203.0.113.1") => new Request("https://floorscalc.co
   headers: { "content-type": "application/json", "CF-Connecting-IP": ip },
   body: typeof body === "string" ? body : JSON.stringify(body),
 });
-const valid = { name: "Test User", email: "test@example.com", subject: "Calculator", message: "Question" };
+const valid = { name: " Test User ", email: "test@example.com", subject: " Calculator ", message: " Question " };
 
 test("contact function rejects unsupported methods", async () => {
   assert.equal((await onRequest()).status, 405);
@@ -16,6 +16,9 @@ test("contact function rejects unsupported methods", async () => {
 test("contact function validates JSON and required fields", async () => {
   assert.equal((await onRequestPost({ request: request("{"), env: {} })).status, 400);
   assert.equal((await onRequestPost({ request: request({ ...valid, email: "invalid" }, "203.0.113.2"), env: {} })).status, 400);
+  assert.equal((await onRequestPost({ request: request({ ...valid, message: "" }, "203.0.113.20"), env: {} })).status, 400);
+  const wrongType = new Request("https://floorscalc.com/api/contact", { method: "POST", body: "text" });
+  assert.equal((await onRequestPost({ request: wrongType, env: {} })).status, 400);
 });
 
 test("contact honeypot returns safely without delivery", async () => {
@@ -29,7 +32,7 @@ test("contact secrets are required only on the server", async () => {
   assert.equal(response.status, 503);
 });
 
-test("contact function delivers through Resend with environment bindings", async () => {
+test("contact function delivers through Brevo with environment bindings", async () => {
   const originalFetch = globalThis.fetch;
   let delivery;
   globalThis.fetch = async (url, init) => {
@@ -39,14 +42,34 @@ test("contact function delivers through Resend with environment bindings", async
   try {
     const response = await onRequestPost({
       request: request(valid, "203.0.113.5"),
-      env: { RESEND_API_KEY: "secret", CONTACT_EMAIL: "owner@example.com", CONTACT_FROM_EMAIL: "site@example.com" },
+      env: { BREVO_API_KEY: "secret", CONTACT_TO_EMAIL: "owner@example.com", CONTACT_FROM_EMAIL: "verified@example.com" },
     });
     assert.equal(response.status, 200);
-    assert.equal(delivery.url, "https://api.resend.com/emails");
-    assert.equal(delivery.init.headers.authorization, "Bearer secret");
+    assert.equal(delivery.url, "https://api.brevo.com/v3/smtp/email");
+    assert.equal(delivery.init.headers["api-key"], "secret");
     const body = JSON.parse(delivery.init.body);
-    assert.deepEqual(body.to, ["owner@example.com"]);
-    assert.equal(body.from, "site@example.com");
+    assert.deepEqual(body.sender, { name: "FloorsCalc", email: "verified@example.com" });
+    assert.deepEqual(body.to, [{ email: "owner@example.com" }]);
+    assert.deepEqual(body.replyTo, { email: "test@example.com", name: "Test User" });
+    assert.match(body.textContent, /Website:\nFloorsCalc/);
+    assert.match(body.textContent, /Subject:\nCalculator/);
+    assert.match(body.textContent, /Submitted:\n\d{4}-\d{2}-\d{2}T/);
+    assert.ok(body.headers.idempotencyKey);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("contact subject is optional and duplicate submissions are accepted once", async () => {
+  const originalFetch = globalThis.fetch;
+  let deliveries = 0;
+  globalThis.fetch = async () => { deliveries += 1; return new Response(null, { status: 201 }); };
+  const env = { BREVO_API_KEY: "secret", CONTACT_TO_EMAIL: "owner@example.com", CONTACT_FROM_EMAIL: "verified@example.com" };
+  const body = { ...valid, subject: "" };
+  try {
+    assert.equal((await onRequestPost({ request: request(body, "203.0.113.7"), env })).status, 200);
+    assert.equal((await onRequestPost({ request: request(body, "203.0.113.7"), env })).status, 200);
+    assert.equal(deliveries, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }

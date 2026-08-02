@@ -75,8 +75,10 @@ test("favicon assets and global metadata are complete", async () => {
 
 test("Cloudflare Pages contact function validates, rate-limits, and keeps secrets server-side", async () => {
   const fn = await read("functions/api/contact.ts");
-  for (const token of ["RESEND_API_KEY", "CONTACT_EMAIL", "CONTACT_FROM_EMAIL", "LIMIT = 5", "website", "CF-Connecting-IP", "api.resend.com"]) assert.match(fn, new RegExp(token));
-  assert.doesNotMatch(await read("src/components/ContactForm.tsx"), /RESEND_API_KEY/);
+  for (const token of ["BREVO_API_KEY", "CONTACT_TO_EMAIL", "CONTACT_FROM_EMAIL", "LIMIT = 5", "website", "CF-Connecting-IP", "api.brevo.com", "idempotencyKey"]) assert.match(fn, new RegExp(token));
+  const client = await read("src/components/ContactForm.tsx");
+  assert.doesNotMatch(client, /BREVO_API_KEY|CONTACT_TO_EMAIL|CONTACT_FROM_EMAIL/);
+  assert.match(client, /name="subject" maxLength=\{160\} \/>/);
 });
 
 test("numeric input and rounding safeguards remain", async () => {

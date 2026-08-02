@@ -35,11 +35,11 @@ Preview deployments should be enabled for all non-production branches. This lets
 
 The contact form requires these private Cloudflare variables:
 
-- `RESEND_API_KEY`: the private API key supplied by Resend
-- `CONTACT_EMAIL`: the address that receives contact messages
-- `CONTACT_FROM_EMAIL`: a sender address on a domain verified in Resend
+- `BREVO_API_KEY`: the private API key supplied by Brevo
+- `CONTACT_TO_EMAIL`: the destination inbox that receives contact messages
+- `CONTACT_FROM_EMAIL`: the verified sender address configured in Brevo
 
-Add them in the Cloudflare Pages project under **Settings → Variables and Secrets**. Store `RESEND_API_KEY` as an encrypted secret. Treat the email settings as private project configuration as well.
+Add them in the Cloudflare Pages project under **Settings → Variables and Secrets**. Store `BREVO_API_KEY` as an encrypted secret. Treat the destination email setting as private project configuration as well.
 
 Configure the variables for both **Production** and **Preview** if contact forms need to work in preview deployments. Never add their values to GitHub, source files, browser code, screenshots, or support messages.
 
@@ -47,16 +47,16 @@ Configure the variables for both **Production** and **Preview** if contact forms
 
 The browser submits the form to `/api/contact`. Cloudflare Pages discovers `functions/api/contact.ts` and publishes it as a Pages Function.
 
-The function:
+Before deploying, register `CONTACT_FROM_EMAIL` as an approved sender in Brevo. The function:
 
 - validates every required field;
 - rejects oversized or unsafe input;
 - uses a hidden spam-trap field;
 - limits repeated submissions;
-- sends the message through Resend; and
+- sends the message through Brevo Transactional Email over HTTPS; and
 - reads all email credentials from Cloudflare's server-side environment.
 
-After the first Pages deployment, submit one real test message. Confirm that the page reports success and that the message arrives at `CONTACT_EMAIL`. If it does not arrive, review the deployment's Function logs and the Resend activity log.
+After the first Pages deployment, submit one real test message. Confirm that the page reports success and that the message arrives at `CONTACT_TO_EMAIL`. If it does not arrive, review the deployment's Function logs and the Brevo transactional activity log.
 
 ## Connect a new Cloudflare Pages project
 
@@ -140,10 +140,10 @@ For every production deployment:
 
 ### The contact form cannot send email
 
-- Confirm the Resend API key is active.
-- Confirm `CONTACT_FROM_EMAIL` uses a domain verified by Resend.
-- Review the Pages Function logs and Resend activity log.
-- Confirm `CONTACT_EMAIL` is a valid receiving address.
+- Confirm the Brevo API key is active.
+- Confirm `CONTACT_FROM_EMAIL` is an approved sender in Brevo.
+- Review the Pages Function logs and Brevo transactional activity log.
+- Confirm `CONTACT_TO_EMAIL` is a valid receiving address.
 
 ### The site works but the custom domain does not
 
