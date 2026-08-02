@@ -66,6 +66,11 @@ export async function onRequestPost({ request, env }: PagesContext) {
   if (name.length > 100 || email.length > 254 || subject.length > 160 || message.length > 5000) {
     return json({ error: "One or more fields are too long." }, 400);
   }
+  console.info("FloorsCalc contact environment check", {
+    BREVO_API_KEY: Boolean(env.BREVO_API_KEY),
+    CONTACT_FROM_EMAIL: Boolean(env.CONTACT_FROM_EMAIL),
+    CONTACT_TO_EMAIL: Boolean(env.CONTACT_TO_EMAIL),
+  });
   if (!env.BREVO_API_KEY || !env.CONTACT_TO_EMAIL || !env.CONTACT_FROM_EMAIL) {
     console.error("FloorsCalc contact environment variables are missing");
     return json({ error: "The contact form is temporarily unavailable. Please try again later." }, 503);
@@ -99,8 +104,18 @@ export async function onRequestPost({ request, env }: PagesContext) {
         tags: ["floorscalc-contact"],
       }),
     });
+    const responseBody = await response.text();
+    console.info("Brevo contact API response", {
+      status: response.status,
+      body: responseBody,
+    });
     if (!response.ok) {
-      const detail = await response.json().catch(() => ({})) as { code?: string };
+      let detail: { code?: string } = {};
+      try {
+        detail = JSON.parse(responseBody) as { code?: string };
+      } catch {
+        // Brevo occasionally returns a non-JSON gateway response.
+      }
       if (detail.code === "duplicate_parameter") return json({ ok: true });
       duplicates.delete(duplicateKey);
       console.error("Brevo contact delivery failed", { status: response.status, code: detail.code || "unknown" });
@@ -109,7 +124,10 @@ export async function onRequestPost({ request, env }: PagesContext) {
     return json({ ok: true });
   } catch (error) {
     duplicates.delete(duplicateKey);
-    console.error("Brevo contact delivery could not be reached", error instanceof Error ? error.message : "unknown error");
+    console.error("Brevo contact delivery could not be reached", {
+      message: error instanceof Error ? error.message : "unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return json({ error: "Your message could not be sent. Please try again later." }, 502);
   }
 }
