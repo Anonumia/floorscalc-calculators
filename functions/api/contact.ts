@@ -14,6 +14,7 @@ const duplicates = new Map<string, number>();
 const WINDOW = 60_000;
 const DUPLICATE_WINDOW = 30 * 60_000;
 const LIMIT = 5;
+export const BREVO_IDEMPOTENCY_KEY_MAX_LENGTH = 32;
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const json = (body: unknown, status = 200) => Response.json(body, {
   status,
@@ -24,20 +25,17 @@ const json = (body: unknown, status = 200) => Response.json(body, {
   },
 });
 
-const hash = async (value: string) => {
+export const createIdempotencyKey = async (fields: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) => {
+  const value = [fields.name, fields.email, fields.subject, fields.message].join("\n");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-};
-
-const environmentDebug = (env: Env) => ({
-  BREVO_API_KEY: Boolean(env.BREVO_API_KEY),
-  CONTACT_FROM_EMAIL: Boolean(env.CONTACT_FROM_EMAIL),
-  CONTACT_TO_EMAIL: Boolean(env.CONTACT_TO_EMAIL),
-});
-
-const safeExceptionMessage = (error: unknown, apiKey?: string) => {
-  const message = error instanceof Error ? error.message : "unknown error";
-  return apiKey ? message.replaceAll(apiKey, "[redacted]") : message;
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, BREVO_IDEMPOTENCY_KEY_MAX_LENGTH);
 };
 
 export async function onRequestPost({ request, env }: PagesContext) {
@@ -77,17 +75,12 @@ export async function onRequestPost({ request, env }: PagesContext) {
   if (name.length > 100 || email.length > 254 || subject.length > 160 || message.length > 5000) {
     return json({ error: "One or more fields are too long." }, 400);
   }
-  const configuration = environmentDebug(env);
-  console.info("FloorsCalc contact environment check", configuration);
   if (!env.BREVO_API_KEY || !env.CONTACT_TO_EMAIL || !env.CONTACT_FROM_EMAIL) {
     console.error("FloorsCalc contact environment variables are missing");
-    return json({
-      error: "The contact form is temporarily unavailable. Please try again later.",
-      debug: { ...configuration, brevoStatus: null, brevoBody: null, exception: null },
-    }, 503);
+    return json({ error: "The contact form is temporarily unavailable. Please try again later." }, 503);
   }
 
-  const duplicateKey = await hash(`${ip}\n${name}\n${email}\n${subject}\n${message}`);
+  const duplicateKey = await createIdempotencyKey({ name, email, subject, message });
   const previousAttempt = duplicates.get(duplicateKey);
   if (previousAttempt && now - previousAttempt < DUPLICATE_WINDOW) return json({ ok: true });
   duplicates.set(duplicateKey, now);
@@ -116,10 +109,6 @@ export async function onRequestPost({ request, env }: PagesContext) {
       }),
     });
     const responseBody = await response.text();
-    console.info("Brevo contact API response", {
-      status: response.status,
-      body: responseBody,
-    });
     if (!response.ok) {
       let detail: Record<string, unknown> = {};
       try {
@@ -130,23 +119,13 @@ export async function onRequestPost({ request, env }: PagesContext) {
       if (detail.code === "duplicate_parameter") return json({ ok: true });
       duplicates.delete(duplicateKey);
       console.error("Brevo contact delivery failed", { status: response.status, code: detail.code || "unknown" });
-      return json({
-        error: "Your message could not be sent. Please try again later.",
-        debug: { ...configuration, brevoStatus: response.status, brevoBody: detail, exception: null },
-      }, 502);
+      return json({ error: "Your message could not be sent. Please try again later." }, 502);
     }
     return json({ ok: true });
   } catch (error) {
     duplicates.delete(duplicateKey);
-    const exception = safeExceptionMessage(error, env.BREVO_API_KEY);
-    console.error("Brevo contact delivery could not be reached", {
-      message: exception,
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    return json({
-      error: "Your message could not be sent. Please try again later.",
-      debug: { ...configuration, brevoStatus: null, brevoBody: null, exception },
-    }, 502);
+    console.error("Brevo contact delivery could not be reached", error instanceof Error ? error.message : "unknown error");
+    return json({ error: "Your message could not be sent. Please try again later." }, 502);
   }
 }
 
