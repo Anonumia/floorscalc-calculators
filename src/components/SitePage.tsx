@@ -23,7 +23,19 @@ function Header() {
         Skip to content
       </a>
       <header>
-        <Link className="brand" href="/">
+        <Link
+          className="brand"
+          href="/"
+          style={{ display: "inline-flex", alignItems: "center", gap: ".5rem", whiteSpace: "nowrap" }}
+        >
+          <img
+            src="/favicon.svg"
+            alt=""
+            width="28"
+            height="28"
+            aria-hidden="true"
+            style={{ display: "block", objectFit: "contain", flex: "0 0 auto" }}
+          />
           {siteConfig.name}
         </Link>
         <nav aria-label="Main navigation">
