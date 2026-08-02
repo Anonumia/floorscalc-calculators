@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   BREVO_IDEMPOTENCY_KEY_MAX_LENGTH,
   createIdempotencyKey,
+  formatSubmittedAt,
   onRequest,
   onRequestPost,
 } from "../functions/api/contact.ts";
@@ -70,6 +71,10 @@ test("Brevo idempotency keys are short, deterministic, and submission-specific",
   assert.equal(BREVO_IDEMPOTENCY_KEY_MAX_LENGTH, 32);
 });
 
+test("contact timestamps use readable FloorsCalc Eastern time", () => {
+  assert.equal(formatSubmittedAt(new Date("2026-08-02T01:19:46.854Z")), "August 1, 2026 • 9:19 PM EDT");
+});
+
 test("contact function delivers through Brevo with environment bindings", async () => {
   const originalFetch = globalThis.fetch;
   let delivery;
@@ -89,9 +94,12 @@ test("contact function delivers through Brevo with environment bindings", async 
     assert.deepEqual(body.sender, { name: "FloorsCalc", email: "verified@example.com" });
     assert.deepEqual(body.to, [{ email: "owner@example.com" }]);
     assert.deepEqual(body.replyTo, { email: "test@example.com", name: "Test User" });
+    assert.equal(body.subject, "FloorsCalc contact: Calculator");
+    assert.match(body.textContent, /^--------------------------------------------------\nNew FloorsCalc Contact Form Submission\n--------------------------------------------------/);
     assert.match(body.textContent, /Website:\nFloorsCalc/);
     assert.match(body.textContent, /Subject:\nCalculator/);
-    assert.match(body.textContent, /Submitted:\n\d{4}-\d{2}-\d{2}T/);
+    assert.match(body.textContent, /Submitted:\n[A-Z][a-z]+ \d{1,2}, \d{4} • \d{1,2}:\d{2} [AP]M E[DS]T/);
+    assert.match(body.textContent, /--------------------------------------------------$/);
     assert.ok(body.headers.idempotencyKey);
     assert.ok(body.headers.idempotencyKey.length <= BREVO_IDEMPOTENCY_KEY_MAX_LENGTH);
   } finally {

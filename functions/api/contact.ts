@@ -38,6 +38,23 @@ export const createIdempotencyKey = async (fields: {
     .slice(0, BREVO_IDEMPOTENCY_KEY_MAX_LENGTH);
 };
 
+export const formatSubmittedAt = (date: Date) => {
+  const timeZone = "America/New_York";
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+  return `${formattedDate} • ${formattedTime}`;
+};
+
 export async function onRequestPost({ request, env }: PagesContext) {
   const ip = request.headers.get("CF-Connecting-IP")
     || request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim()
@@ -88,8 +105,9 @@ export async function onRequestPost({ request, env }: PagesContext) {
     if (now - time >= DUPLICATE_WINDOW) duplicates.delete(key);
   }
 
-  const submitted = new Date(now).toISOString();
+  const submitted = formatSubmittedAt(new Date(now));
   const displaySubject = subject || "(No subject provided)";
+  const divider = "--------------------------------------------------";
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -103,7 +121,7 @@ export async function onRequestPost({ request, env }: PagesContext) {
         to: [{ email: env.CONTACT_TO_EMAIL }],
         replyTo: { email, name },
         subject: `FloorsCalc contact: ${subject || "General inquiry"}`,
-        textContent: `Website:\nFloorsCalc\n\nName:\n${name}\n\nEmail:\n${email}\n\nSubject:\n${displaySubject}\n\nMessage:\n${message}\n\nSubmitted:\n${submitted}`,
+        textContent: `${divider}\nNew FloorsCalc Contact Form Submission\n${divider}\n\nWebsite:\nFloorsCalc\n\nName:\n${name}\n\nEmail:\n${email}\n\nSubject:\n${displaySubject}\n\nMessage:\n${message}\n\nSubmitted:\n${submitted}\n\n${divider}`,
         headers: { idempotencyKey: duplicateKey },
         tags: ["floorscalc-contact"],
       }),
