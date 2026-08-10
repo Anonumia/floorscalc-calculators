@@ -182,7 +182,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
       <>
         <section className="hero">
           <p className="eyebrow">{siteConfig.tagline}</p>
-          <h1>Measure once. Plan with confidence.</h1>
+          <h1>Measure once.<br />Plan with confidence.</h1>
           <p>
             Six focused calculators with transparent formulas, practical
             defaults, and no pricing or hidden assumptions.
