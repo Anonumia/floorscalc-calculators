@@ -65,6 +65,20 @@ test("guides, policy wording, navigation, and footer are preserved", async () =>
   for (const href of ["/calculators", "/guides", "/about", "/contact", "/privacy", "/terms"]) assert.match(page, new RegExp(`href="${href}"`));
 });
 
+test("privacy policy accurately describes analytics, advertising, and contact delivery", async () => {
+  const page = await read(pagePath);
+  for (const text of [
+    "Google Analytics is not installed",
+    "Cloudflare services, including aggregate web analytics",
+    "Cloudflare Web Analytics does not use cookies",
+    "Advertising and Google AdSense",
+    "personalized or non-personalized ads",
+    "myadcenter.google.com",
+    "Brevo acts as the email delivery\\s+provider",
+  ]) assert.match(page, new RegExp(text));
+  assert.doesNotMatch(page, /Resend|Google AdSense may be added in the future|neither is currently enabled/);
+});
+
 test("favicon assets and global metadata are complete", async () => {
   const layout = await read("src/layouts/BaseLayout.astro");
   for (const file of ["favicon.ico", "favicon.svg", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png", "android-chrome-192x192.png", "android-chrome-512x512.png", "site.webmanifest"]) {

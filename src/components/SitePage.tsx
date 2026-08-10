@@ -182,7 +182,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
       <>
         <section className="hero">
           <p className="eyebrow">{siteConfig.tagline}</p>
-          <h1>Measure once. Plan flooring with confidence.</h1>
+          <h1>Measure once. Plan with confidence.</h1>
           <p>
             Six focused calculators with transparent formulas, practical
             defaults, and no pricing or hidden assumptions.
@@ -382,11 +382,15 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
     content = (
       <article className="reading policy">
         <h1>Privacy Policy</h1>
+        <p>Last updated: August 10, 2026</p>
         <h2>Current practices</h2>
         <p>
           {siteConfig.name} provides browser-based calculators and a contact
-          form. We do not currently use Google Analytics, Google AdSense,
-          behavioral advertising, or advertising cookies.
+          form. Google Analytics is not installed. The deployed site uses
+          Cloudflare services, including aggregate web analytics, hosting, and
+          security features. Cloudflare Web Analytics does not use cookies or
+          local storage to collect usage metrics. We are also preparing the
+          site to use Google AdSense as described below.
         </p>
         <h2>Calculator inputs</h2>
         <p>
@@ -396,9 +400,9 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         </p>
         <h2>Contact-form submissions</h2>
         <p>
-          When you use the contact form, your name, email address, subject,
-          message, and technical delivery information are processed to deliver
-          and respond to your request. Resend acts as the email delivery
+          When you use the contact form, your name (if provided), email address,
+          subject, message, and technical delivery information are processed to
+          deliver and respond to your request. Brevo acts as the email delivery
           provider. Do not submit sensitive personal information.
         </p>
         <h2>Server logs</h2>
@@ -409,23 +413,42 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         </p>
         <h2>Cookies</h2>
         <p>
-          The current calculators do not require tracking cookies. Essential
-          hosting or security features may use limited technical storage. Your
-          browser lets you review or block cookies, although doing so may affect
-          some functions.
+          The calculators themselves do not require tracking cookies. Hosting,
+          security, and advertising services may use cookies or similar
+          technologies for functions such as security, measurement, ad
+          delivery, frequency control, and fraud prevention. Your browser lets
+          you review or block cookies, although doing so may affect some
+          functions.
         </p>
-        <h2>Possible future analytics and advertising</h2>
+        <h2>Advertising and Google AdSense</h2>
         <p>
-          Google Analytics or Google AdSense may be added in the future, but
-          neither is currently enabled. Before enabling them, we will update
-          this policy and provide any consent choices required by applicable
-          law.
+          We may use Google AdSense to display advertisements. Third-party
+          vendors, including Google, may use cookies or similar technologies to
+          serve ads based on a visitor&apos;s prior visits to this website or
+          other websites, and to deliver, measure, and limit repeated ads.
+        </p>
+        <p>
+          Depending on a visitor&apos;s consent, settings, and applicable law,
+          Google may serve personalized or non-personalized ads. Personalized
+          ads may use information about prior activity to select relevant ads.
+          Non-personalized ads are generally selected using contextual
+          information, such as the content being viewed, general location, or
+          time of day, but may still use cookies or similar technologies for
+          purposes such as frequency capping, aggregated reporting, and fraud
+          prevention.
+        </p>
+        <p>
+          Visitors can learn how Google uses information for advertising in
+          Google&apos;s <a href="https://policies.google.com/technologies/ads">Advertising policies and technologies</a> information
+          and can manage personalized-ad settings through <a href="https://myadcenter.google.com/">My Ad Center</a>.
         </p>
         <h2>Third-party services</h2>
         <p>
-          Cloud hosting providers deliver the site, and Resend processes
-          contact-form email. Those providers process information under their
-          own terms and privacy practices.
+          Cloudflare delivers and protects the site and provides aggregate web
+          analytics. Brevo processes contact-form email. Google and its
+          advertising partners may process information when Google ads are
+          served. These providers process information under their own terms and
+          privacy practices.
         </p>
         <h2>Data retention</h2>
         <p>
@@ -444,8 +467,10 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <h2>Your choices</h2>
         <p>
           You may avoid the contact form, limit cookies through your browser, or
-          ask about a submitted message through the Contact page. Legal rights
-          may vary by location.
+          ask about a submitted message through the Contact page. You may also
+          use Google&apos;s advertising controls linked above. Consent choices
+          will be provided where required by applicable law. Legal rights may
+          vary by location.
         </p>
         <p>
           {siteConfig.name} is a general-purpose flooring planning website and
@@ -454,8 +479,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <h2>Policy changes</h2>
         <p>
           We may revise this policy when site practices change. The current
-          version will remain available on this page without a fabricated
-          effective date.
+          version and its last-updated date will remain available on this page.
         </p>
         <h2>Contact</h2>
         <p>
