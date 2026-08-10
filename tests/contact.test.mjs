@@ -23,6 +23,7 @@ test("contact function validates JSON and required fields", async () => {
   assert.equal((await onRequestPost({ request: request("{"), env: {} })).status, 400);
   assert.equal((await onRequestPost({ request: request({ ...valid, email: "invalid" }, "203.0.113.2"), env: {} })).status, 400);
   assert.equal((await onRequestPost({ request: request({ ...valid, message: "" }, "203.0.113.20"), env: {} })).status, 400);
+  assert.equal((await onRequestPost({ request: request({ ...valid, name: "" }, "203.0.113.21"), env: {} })).status, 503);
   const wrongType = new Request("https://floorscalc.com/api/contact", { method: "POST", body: "text" });
   assert.equal((await onRequestPost({ request: wrongType, env: {} })).status, 400);
 });
@@ -95,13 +96,39 @@ test("contact function delivers through Brevo with environment bindings", async 
     assert.deepEqual(body.to, [{ email: "owner@example.com" }]);
     assert.deepEqual(body.replyTo, { email: "test@example.com", name: "Test User" });
     assert.equal(body.subject, "FloorsCalc contact: Calculator");
+    assert.match(body.htmlContent, /FloorsCalc/);
+    assert.match(body.htmlContent, /New contact form submission/);
+    assert.match(body.htmlContent, /Reply to this email to respond directly to Test User\./);
     assert.match(body.textContent, /^--------------------------------------------------\nNew FloorsCalc Contact Form Submission\n--------------------------------------------------/);
     assert.match(body.textContent, /Website:\nFloorsCalc/);
     assert.match(body.textContent, /Subject:\nCalculator/);
     assert.match(body.textContent, /Submitted:\n[A-Z][a-z]+ \d{1,2}, \d{4} • \d{1,2}:\d{2} [AP]M E[DS]T/);
-    assert.match(body.textContent, /--------------------------------------------------$/);
+    assert.match(body.textContent, /Reply to this email to respond directly to Test User\.$/);
     assert.ok(body.headers.idempotencyKey);
     assert.ok(body.headers.idempotencyKey.length <= BREVO_IDEMPOTENCY_KEY_MAX_LENGTH);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("contact email safely presents an omitted name and escapes HTML", async () => {
+  const originalFetch = globalThis.fetch;
+  let delivery;
+  globalThis.fetch = async (_url, init) => {
+    delivery = JSON.parse(init.body);
+    return new Response(null, { status: 201 });
+  };
+  try {
+    const response = await onRequestPost({
+      request: request({ ...valid, name: "", message: "Question <script>alert(1)</script>" }, "203.0.113.51"),
+      env: { BREVO_API_KEY: "secret", CONTACT_TO_EMAIL: "owner@example.com", CONTACT_FROM_EMAIL: "verified@example.com" },
+    });
+    assert.equal(response.status, 200);
+    assert.deepEqual(delivery.replyTo, { email: "test@example.com", name: "test@example.com" });
+    assert.match(delivery.htmlContent, /Not provided/);
+    assert.match(delivery.textContent, /Name:\nNot provided/);
+    assert.match(delivery.htmlContent, /Question &lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+    assert.doesNotMatch(delivery.htmlContent, /<script>/);
   } finally {
     globalThis.fetch = originalFetch;
   }

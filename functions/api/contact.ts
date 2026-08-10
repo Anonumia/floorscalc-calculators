@@ -16,6 +16,13 @@ const DUPLICATE_WINDOW = 30 * 60_000;
 const LIMIT = 5;
 export const BREVO_IDEMPOTENCY_KEY_MAX_LENGTH = 32;
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (character) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+})[character] || character);
 const json = (body: unknown, status = 200) => Response.json(body, {
   status,
   headers: {
@@ -86,8 +93,8 @@ export async function onRequestPost({ request, env }: PagesContext) {
   const email = clean(input.email);
   const subject = clean(input.subject);
   const message = clean(input.message);
-  if (/\r|\n/.test(name + email + subject) || !name || !/^\S+@\S+\.\S+$/.test(email) || !message) {
-    return json({ error: "Please enter your name, a valid email address, and a message." }, 400);
+  if (/\r|\n/.test(name + email + subject) || !/^\S+@\S+\.\S+$/.test(email) || !message) {
+    return json({ error: "Please enter a valid email address and a message." }, 400);
   }
   if (name.length > 100 || email.length > 254 || subject.length > 160 || message.length > 5000) {
     return json({ error: "One or more fields are too long." }, 400);
@@ -106,8 +113,39 @@ export async function onRequestPost({ request, env }: PagesContext) {
   }
 
   const submitted = formatSubmittedAt(new Date(now));
+  const displayName = name || "Not provided";
   const displaySubject = subject || "(No subject provided)";
   const divider = "--------------------------------------------------";
+  const emailFields = [
+    ["Name", displayName],
+    ["Email", email],
+    ["Subject", displaySubject],
+    ["Submitted", submitted],
+  ];
+  const htmlFields = emailFields.map(([label, value]) => `
+    <tr>
+      <td style="padding:8px 16px 8px 0;color:#64748b;font-size:13px;font-weight:700;vertical-align:top;white-space:nowrap;">${escapeHtml(label)}</td>
+      <td style="padding:8px 0;color:#1e293b;font-size:14px;line-height:1.5;">${escapeHtml(value)}</td>
+    </tr>`).join("");
+  const htmlContent = `<!doctype html>
+<html lang="en"><body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;color:#1e293b;">
+  <div style="padding:32px 16px;">
+    <div style="max-width:640px;margin:0 auto;overflow:hidden;border:1px solid #dbe5df;border-radius:16px;background:#ffffff;box-shadow:0 8px 24px rgba(15,23,42,.08);">
+      <div style="padding:24px 28px;background:#173f35;color:#ffffff;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c8dfb4;">FloorsCalc</div>
+        <h1 style="margin:8px 0 0;font-size:24px;line-height:1.25;">New contact form submission</h1>
+      </div>
+      <div style="padding:24px 28px;">
+        <table role="presentation" style="width:100%;border-collapse:collapse;">${htmlFields}
+        </table>
+        <div style="height:1px;margin:20px 0;background:#e2e8f0;"></div>
+        <div style="margin-bottom:8px;color:#64748b;font-size:13px;font-weight:700;">Message</div>
+        <div style="white-space:pre-wrap;color:#1e293b;font-size:15px;line-height:1.65;">${escapeHtml(message)}</div>
+      </div>
+      <div style="padding:16px 28px;background:#f8fafc;color:#64748b;font-size:12px;line-height:1.5;">Reply to this email to respond directly to ${escapeHtml(name || email)}.</div>
+    </div>
+  </div>
+</body></html>`;
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -119,9 +157,10 @@ export async function onRequestPost({ request, env }: PagesContext) {
       body: JSON.stringify({
         sender: { name: "FloorsCalc", email: env.CONTACT_FROM_EMAIL },
         to: [{ email: env.CONTACT_TO_EMAIL }],
-        replyTo: { email, name },
+        replyTo: { email, name: name || email },
         subject: `FloorsCalc contact: ${subject || "General inquiry"}`,
-        textContent: `${divider}\nNew FloorsCalc Contact Form Submission\n${divider}\n\nWebsite:\nFloorsCalc\n\nName:\n${name}\n\nEmail:\n${email}\n\nSubject:\n${displaySubject}\n\nMessage:\n${message}\n\nSubmitted:\n${submitted}\n\n${divider}`,
+        htmlContent,
+        textContent: `${divider}\nNew FloorsCalc Contact Form Submission\n${divider}\n\nWebsite:\nFloorsCalc\n\nName:\n${displayName}\n\nEmail:\n${email}\n\nSubject:\n${displaySubject}\n\nMessage:\n${message}\n\nSubmitted:\n${submitted}\n\n${divider}\n\nReply to this email to respond directly to ${name || email}.`,
         headers: { idempotencyKey: duplicateKey },
         tags: ["floorscalc-contact"],
       }),

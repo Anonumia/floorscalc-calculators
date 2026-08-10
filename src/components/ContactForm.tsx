@@ -10,11 +10,10 @@ export default function ContactForm() {
     event.preventDefault();
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form));
-    const name = String(data.name || "").trim();
     const email = String(data.email || "").trim();
     const message = String(data.message || "").trim();
-    if (!name || !/^\S+@\S+\.\S+$/.test(email) || !message) {
-      setStatus({ kind: "error", message: "Please enter your name, a valid email address, and a message." });
+    if (!/^\S+@\S+\.\S+$/.test(email) || !message) {
+      setStatus({ kind: "error", message: "Please enter a valid email address and a message." });
       return;
     }
 
@@ -40,7 +39,7 @@ export default function ContactForm() {
   return (
     <form className="contact-form" onSubmit={submit} noValidate>
       <div className="form-grid">
-        <label>Name <input name="name" autoComplete="name" maxLength={100} required /></label>
+        <label>Name (optional) <input name="name" autoComplete="name" maxLength={100} /></label>
         <label>Email <input name="email" type="email" autoComplete="email" maxLength={254} required /></label>
       </div>
       <label>Subject <input name="subject" maxLength={160} /></label>
