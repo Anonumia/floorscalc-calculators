@@ -56,6 +56,11 @@ const socialImage = new URL("/og.jpg", siteConfig.url).toString();
       gtag("js", new Date());
       gtag("config", "G-Y5WVHZW7SZ");
     </script>
+    <script is:inline>
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+      });
+    </script>
     <title>{pageTitle}</title>
   </head>
   <body><slot /></body>

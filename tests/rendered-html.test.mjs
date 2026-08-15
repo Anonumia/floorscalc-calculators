@@ -14,6 +14,12 @@ test("homepage preserves approved branding and metadata", async () => {
   assert.match(html, /site\.webmanifest/);
 });
 
+test("site suppresses automatic install prompts without rendering an install CTA", async () => {
+  const html = await read("index.html");
+  assert.match(html, /beforeinstallprompt[\s\S]*?preventDefault\(\)/);
+  assert.doesNotMatch(html, />\s*(?:Install App|Add to Home Screen)\s*</i);
+});
+
 test("every required route is generated", async () => {
   const routes = [
     "index.html", "calculators/index.html", "general-flooring-calculator/index.html",
