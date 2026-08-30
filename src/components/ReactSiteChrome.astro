@@ -1,0 +1,14 @@
+---
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
+import { SiteFooter, SiteHeader } from "./SiteChrome";
+
+interface Props {
+  part: "header" | "footer";
+}
+
+const { part } = Astro.props;
+const Component = part === "header" ? SiteHeader : SiteFooter;
+const html = renderToString(createElement(Component));
+---
+<Fragment set:html={html} />

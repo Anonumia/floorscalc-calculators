@@ -1,8 +1,9 @@
 import type { AnchorHTMLAttributes } from "react";
 import Calculator from "./Calculator";
 import ContactForm from "./ContactForm";
-import { calculators } from "../data/site-data";
+import { calculators, guides, guidePath } from "../data/site-data";
 import { siteConfig } from "../data/site-config";
+import { SiteFooter, SiteHeader } from "./SiteChrome";
 
 const Link = ({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
   <a href={href} {...props} />
@@ -16,57 +17,6 @@ const calcKinds: Record<string, any> = {
   "hardwood-flooring-calculator": "hardwood",
   "carpet-calculator": "carpet",
 };
-function Header() {
-  return (
-    <>
-      <a className="skip" href="#main">
-        Skip to content
-      </a>
-      <header>
-        <Link
-          className="brand"
-          href="/"
-          style={{ display: "inline-flex", alignItems: "center", gap: ".5rem", whiteSpace: "nowrap" }}
-        >
-          <img
-            src="/favicon.svg"
-            alt=""
-            width="28"
-            height="28"
-            aria-hidden="true"
-            style={{ display: "block", objectFit: "contain", flex: "0 0 auto" }}
-          />
-          {siteConfig.name}
-        </Link>
-        <nav aria-label="Main navigation">
-          <Link href="/calculators">Calculators</Link>
-          <Link href="/guides">Guides</Link>
-          <Link href="/about">About</Link>
-        </nav>
-      </header>
-    </>
-  );
-}
-function Footer() {
-  return (
-    <footer>
-      <strong>{siteConfig.name}</strong>
-      <nav aria-label="Footer navigation">
-        <Link href="/calculators">All Calculators</Link>
-        <Link href="/guides">Guides</Link>
-        <Link href="/about">About</Link>
-        <Link href="/contact">Contact</Link>
-        <Link href="/privacy">Privacy Policy</Link>
-        <Link href="/terms">Terms of Use</Link>
-      </nav>
-      <p>
-        © {new Date().getFullYear()} {siteConfig.name}. Free flooring planning
-        calculators. Results are estimates, not professional advice.
-      </p>
-    </footer>
-  );
-}
-
 const Cards = ({ headingLevel = 3 }: { headingLevel?: 2 | 3 }) => {
   const CardHeading = `h${headingLevel}` as "h2" | "h3";
   return <div className="cards">
@@ -96,6 +46,51 @@ const Related = ({ current }: { current: string }) => (
             {x[1]}
           </Link>
         ))}
+    </div>
+  </section>
+);
+
+const calculatorGuides: Record<string, string[]> = {
+  "general-flooring-calculator": [
+    "how-to-measure-a-room-for-flooring",
+    "how-to-calculate-flooring-for-multiple-rooms",
+    "how-much-extra-flooring-to-buy",
+  ],
+  "tile-calculator": [
+    "how-to-calculate-tile-needed",
+    "how-much-extra-flooring-to-buy",
+    "flooring-box-carton-coverage",
+  ],
+  "vinyl-plank-calculator": [
+    "how-to-calculate-vinyl-plank-flooring",
+    "how-much-extra-flooring-to-buy",
+    "flooring-box-carton-coverage",
+  ],
+  "laminate-flooring-calculator": [
+    "how-to-calculate-laminate-flooring",
+    "how-much-extra-flooring-to-buy",
+    "flooring-box-carton-coverage",
+  ],
+  "hardwood-flooring-calculator": [
+    "how-to-calculate-hardwood-flooring",
+    "how-much-extra-flooring-to-buy",
+    "flooring-box-carton-coverage",
+  ],
+  "carpet-calculator": [
+    "how-to-measure-for-carpet",
+    "flooring-square-feet-vs-square-yards",
+    "how-to-measure-a-room-for-flooring",
+  ],
+};
+
+const RelatedGuides = ({ current }: { current: string }) => (
+  <section className="compact-guides">
+    <h2>Related guides</h2>
+    <div className="link-row">
+      {calculatorGuides[current].map((slug) => {
+        const guide = guides.find((candidate) => candidate.slug === slug)!;
+        return <Link href={guidePath(slug)} key={slug}>{guide.title}</Link>;
+      })}
     </div>
   </section>
 );
@@ -154,7 +149,7 @@ const specific: Record<
   },
   "hardwood-flooring-calculator": {
     intro:
-      "Estimate hardwood area and cartons, with fixed-board counts only when dimensions are known.",
+      "Estimate hardwood area and whole cartons using the coverage stated for the selected product.",
     method:
       "Final hardwood area = measured area × (1 + allowance rate). Cartons = final area ÷ carton coverage, rounded up.",
     example:
@@ -212,6 +207,19 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
           </p>
           <Link href="/guides">Read the measurement guides →</Link>
         </section>
+        <section className="guide-discovery">
+          <h2>Plan before you calculate</h2>
+          <p>
+            Learn how to measure a room, combine several areas, and choose a
+            project-appropriate material allowance before entering the numbers.
+          </p>
+          <div className="guide-links">
+            <Link href="/guides/how-to-measure-a-room-for-flooring">Measure a room</Link>
+            <Link href="/guides/how-to-calculate-flooring-for-multiple-rooms">Combine multiple rooms</Link>
+            <Link href="/guides/how-much-extra-flooring-to-buy">Plan extra flooring</Link>
+            <Link href="/guides">View all flooring guides →</Link>
+          </div>
+        </section>
       </>
     );
   else if (slug === "calculators")
@@ -250,6 +258,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
             quantities with the product manufacturer or qualified installer.
           </p>
         </section>
+        <RelatedGuides current={slug} />
         <Related current={slug} />
       </article>
     );
@@ -259,83 +268,32 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <p className="eyebrow">Practical flooring planning</p>
         <h1>Flooring Guides</h1>
         <p>
-          Use these concise guides to measure rooms consistently, understand
-          material allowances, and interpret flooring quantities before
-          purchasing.
+          Follow a project from room measurements to a whole-package estimate,
+          or go directly to the material-specific guide you need.
         </p>
-        <h2 id="measure-room">How to Measure a Room for Flooring</h2>
-        <p>
-          Sketch the room and divide L-shaped or irregular spaces into
-          rectangles. Measure each rectangle at its longest and widest points,
-          multiply length by width, then add the areas. Measure closets and
-          alcoves separately when they will receive flooring.
-        </p>
-        <h2 id="material-allowance">
-          How Much Flooring Allowance Should You Add?
-        </h2>
-        <p>
-          Material allowance covers cuts, damaged pieces, product defects, and
-          layout needs. The calculators use 10% as an editable starting point
-          because it is practical for many straightforward rooms, but it is not
-          a universal rule. Room shape, installation pattern, manufacturer
-          instructions, and installer recommendations may require a different
-          percentage.
-        </p>
-        <h2 id="square-feet-vs-square-yards">Square Feet vs Square Yards</h2>
-        <p>
-          Hard flooring is commonly measured in square feet, while carpet may
-          also be described in square yards. One square yard equals nine square
-          feet. Convert square feet to square yards by dividing the total area
-          by nine—not by dividing each room dimension by nine.
-        </p>
-        <h2 id="box-coverage">How Flooring Box Coverage Works</h2>
-        <p>
-          Box or carton coverage is the finished area the packaged product is
-          intended to cover. Coverage differs by manufacturer and product
-          because plank, board, or tile dimensions and the number of pieces in
-          each box vary. Use the coverage printed on the exact packaging or
-          product page rather than assuming a standard box size.
-        </p>
-        <h2 id="carpet-estimates">
-          Why Carpet Estimates Are Different from Boxed Flooring
-        </h2>
-        <p>
-          Carpet is cut from rolls, so room area alone does not determine an
-          efficient layout. Roll width, direction, seams, pattern matching,
-          doorways, closets, stairs, and installer decisions can change the
-          required length. Treat online carpet results as preliminary planning
-          estimates.
-        </p>
-        <h2 id="imperial-vs-metric">Choosing Imperial vs Metric</h2>
-        <p>
-          Choose the system used by your tape measure and product packaging.
-          Imperial mode uses feet, inches, square feet, and square yards where
-          useful. Metric mode uses meters, centimeters, and square meters. Keep
-          every input in the selected system rather than mixing units.
-        </p>
-        <h2 id="rounding-up">Why Quantities Are Rounded Up</h2>
-        <p>
-          Stores normally sell whole tiles, planks, boards, boxes, and cartons.
-          A calculated need of 5.01 boxes still requires 6 whole boxes, so
-          purchase quantities are rounded up only after the full-precision
-          calculation is complete.
-        </p>
-        <h2 id="measuring-mistakes">Common Measuring Mistakes</h2>
-        <p>
-          Common errors include omitting closets, mixing feet and inches,
-          measuring only one side of an irregular room, rounding dimensions too
-          early, and using coverage from a different product. Record each area,
-          keep units consistent, and verify the final measurements before
-          ordering.
-        </p>
-        <h2 id="ready-to-calculate">Ready to Calculate?</h2>
-        <p>
-          Use your measurements with the calculator designed for your flooring
-          material.
-        </p>
-        <Link className="button" href="/calculators">
-          View all calculators
-        </Link>
+        <section className="start-here" aria-labelledby="start-here-heading">
+          <h2 id="start-here-heading">Start here</h2>
+          <ol>
+            <li><Link href="/guides/how-to-measure-a-room-for-flooring">Measure each floor area</Link></li>
+            <li><Link href="/guides/how-to-calculate-flooring-for-multiple-rooms">Combine applicable rooms</Link></li>
+            <li><Link href="/guides/how-much-extra-flooring-to-buy">Choose a material allowance</Link></li>
+            <li><Link href="/guides/flooring-box-carton-coverage">Use the exact package coverage</Link></li>
+            <li><Link href="/calculators">Open the appropriate calculator</Link></li>
+          </ol>
+        </section>
+        {["Measuring and area", "Allowance and purchasing", "Material-specific planning"].map((group) => (
+          <section key={group} aria-labelledby={`guide-group-${group.replaceAll(" ", "-").toLowerCase()}`}>
+            <h2 id={`guide-group-${group.replaceAll(" ", "-").toLowerCase()}`}>{group}</h2>
+            <div className="guide-list">
+              {guides.filter((guide) => guide.group === group).map((guide) => (
+                <Link href={guidePath(guide.slug)} key={guide.slug}>
+                  <h3>{guide.title}</h3>
+                  <p>{guide.summary}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
       </article>
     );
   else if (slug === "about")
@@ -386,11 +344,15 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <h2>Current practices</h2>
         <p>
           {siteConfig.name} provides browser-based calculators and a contact
-          form. Google Analytics is not installed. The deployed site uses
-          Cloudflare services, including aggregate web analytics, hosting, and
-          security features. Cloudflare Web Analytics does not use cookies or
-          local storage to collect usage metrics. We are also preparing the
-          site to use Google AdSense as described below.
+          form. The site uses Google Analytics through its Google tag to
+          understand site usage and performance. Google Analytics may process
+          information such as visited pages, approximate location, device and
+          browser information, and interaction data, subject to consent and
+          applicable settings. The deployed site also uses Cloudflare services,
+          including aggregate web analytics, hosting, and security features.
+          Cloudflare Web Analytics does not use cookies or local storage to
+          collect usage metrics. We are also preparing the site to use Google
+          AdSense as described below.
         </p>
         <h2>Calculator inputs</h2>
         <p>
@@ -445,7 +407,8 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <h2>Third-party services</h2>
         <p>
           Cloudflare delivers and protects the site and provides aggregate web
-          analytics. Brevo processes contact-form email. Google and its
+          analytics. Google Analytics processes site-usage information through
+          the Google tag. Brevo processes contact-form email. Google and its
           advertising partners may process information when Google ads are
           served. These providers process information under their own terms and
           privacy practices.
@@ -568,9 +531,9 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
   else return null;
   return (
     <>
-      <Header />
+      <SiteHeader />
       <main id="main">{content}</main>
-      <Footer />
+      <SiteFooter />
     </>
   );
 }

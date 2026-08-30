@@ -1,0 +1,36 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import ReactSiteChrome from "../components/ReactSiteChrome.astro";
+import { guidePath } from "../data/site-data";
+
+interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    slug: string;
+    eyebrow?: string;
+  };
+}
+
+const { frontmatter } = Astro.props;
+---
+<BaseLayout
+  title={frontmatter.title}
+  description={frontmatter.description}
+  path={guidePath(frontmatter.slug)}
+>
+  <ReactSiteChrome part="header" />
+  <main id="main">
+    <article class="reading guide-article">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/guides">Flooring Guides</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{frontmatter.title}</span>
+      </nav>
+      <p class="eyebrow">{frontmatter.eyebrow ?? "Flooring planning guide"}</p>
+      <h1>{frontmatter.title}</h1>
+      <slot />
+    </article>
+  </main>
+  <ReactSiteChrome part="footer" />
+</BaseLayout>

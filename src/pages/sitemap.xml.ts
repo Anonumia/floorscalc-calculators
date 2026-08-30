@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { calculators } from "../data/site-data";
+import { calculators, guides, guidePath } from "../data/site-data";
 import { siteConfig } from "../data/site-config";
 
 const paths = [
@@ -7,6 +7,7 @@ const paths = [
   "calculators",
   ...calculators.map(([slug]) => slug),
   "guides",
+  ...guides.map(({ slug }) => guidePath(slug).slice(1)),
   "about",
   "contact",
   "privacy",
