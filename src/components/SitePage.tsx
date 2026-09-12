@@ -329,7 +329,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <h1>Contact {siteConfig.name}</h1>
         <p>
           Send a question, correction, or suggestion about the site. For a
-          calculation issues, include the calculator name, measurement system
+          calculation issue, include the calculator name, measurement system
           (Imperial or Metric), your inputs, the result you expected, and the
           result displayed by the calculator.
         </p>
