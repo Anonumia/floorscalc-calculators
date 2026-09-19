@@ -101,6 +101,48 @@ test("public pages have unique metadata and a single primary heading", async () 
   }
 });
 
+test("calculator and guide hubs link every substantive destination", async () => {
+  const [calculatorHub, guideHub] = await Promise.all([
+    read("calculators/index.html"),
+    read("guides/index.html"),
+  ]);
+  for (const route of publicRoutes.filter((route) => /-calculator\/index\.html$/.test(route))) {
+    const href = `/${route.replace(/\/index\.html$/, "")}`;
+    assert.match(calculatorHub, new RegExp(`href="${href}"`), href);
+  }
+  for (const slug of guideSlugs) {
+    assert.match(guideHub, new RegExp(`href="/guides/${slug}"`), slug);
+  }
+});
+
+test("calculator pages include distinct material planning guidance and guide links", async () => {
+  const expectations = {
+    "general-flooring-calculator/index.html": ["How to Calculate Flooring for Multiple Rooms", "exact box or carton", "how-to-calculate-flooring-for-multiple-rooms"],
+    "tile-calculator/index.html": ["grout-joint conventions", "Diagonal or repeating layouts", "how-to-calculate-tile-needed"],
+    "vinyl-plank-calculator/index.html": ["Stagger rules", "narrow final row", "how-to-calculate-vinyl-plank-flooring"],
+    "laminate-flooring-calculator/index.html": ["Locking edges", "Expansion gaps", "how-to-calculate-laminate-flooring"],
+    "hardwood-flooring-calculator/index.html": ["Random-length products", "future repair", "how-to-calculate-hardwood-flooring"],
+    "carpet-calculator/index.html": ["full-width runs", "professionally measured", "how-to-measure-for-carpet"],
+  };
+  for (const [route, phrases] of Object.entries(expectations)) {
+    const html = await read(route);
+    assert.match(html, /<h2>Plan for this material<\/h2>/, route);
+    for (const phrase of phrases) assert.match(html, new RegExp(phrase, "i"), `${route}: ${phrase}`);
+  }
+});
+
+test("every internal page link resolves to a generated public route", async () => {
+  const knownPaths = new Set(publicRoutes.map((route) => route === "index.html" ? "/" : `/${route.replace(/index\.html$/, "")}`.replace(/\/$/, "")));
+  for (const route of publicRoutes) {
+    const html = await read(route);
+    for (const href of html.matchAll(/href="(\/[^"#?]*)/g)) {
+      const path = href[1].replace(/\/$/, "") || "/";
+      if (path.startsWith("/api/") || /\.[a-z0-9]+$/i.test(path)) continue;
+      assert.ok(knownPaths.has(path), `${route} broken internal link: ${path}`);
+    }
+  }
+});
+
 test("guide pages have canonical metadata, useful structure, and working internal links", async () => {
   const knownPaths = new Set(publicRoutes.map((route) => route === "index.html" ? "/" : `/${route.replace(/index\.html$/, "")}`.replace(/\/$/, "")));
   for (const slug of guideSlugs) {

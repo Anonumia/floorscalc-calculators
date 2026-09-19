@@ -101,6 +101,7 @@ const specific: Record<
     method: string;
     example: string;
     tips: string;
+    planning: string[];
     limits: string;
   }
 > = {
@@ -112,6 +113,11 @@ const specific: Record<
     example:
       "A 10 ft × 12 ft room is 120 sq ft. At 10%, the allowance is 12 sq ft, so the final requirement is 132 sq ft.",
     tips: "Measure at the widest and longest points. Split L-shaped spaces into rectangles and label each part.",
+    planning: [
+      "Add every space that will receive the same product, including closets and connecting areas. Enter separate rectangles for L-shaped rooms so the combined measured area remains easy to check.",
+      "Adjust the extra-material allowance for the actual room shape, installation pattern, and product guidance. The default is a starting input, not a rule.",
+      "For a purchase estimate, enter the coverage printed on the exact box or carton. Similar products can contain different coverage, so exact product information matters more than an assumed box size.",
+    ],
     limits:
       "This area estimate does not plan board direction, seams, pattern repeats, or irregular cut geometry.",
   },
@@ -123,6 +129,11 @@ const specific: Record<
     example:
       "A 100 sq ft surface using 12 in × 12 in tiles needs 100 tiles before allowance and 110 tiles at 10%.",
     tips: "Use the actual tile dimensions, and measure each wall or floor section separately. Confirm whether package coverage includes nominal grout joints.",
+    planning: [
+      "Use actual tile dimensions and check how the manufacturer states carton coverage. Nominal sizes and grout-joint conventions can make a dimension-based count differ from packaged coverage.",
+      "Edge cuts, breakage, centered layouts, and openings affect usable pieces. Diagonal or repeating layouts may need a different allowance than a simple straight layout, so no single percentage fits every tile project.",
+      "The result estimates field tile only. Confirm specialty pieces and separate requirements for grout, adhesive, membranes, and trim before purchasing.",
+    ],
     limits:
       "No grout, thinset, spacers, layout centering, or pattern matching is calculated.",
   },
@@ -134,6 +145,11 @@ const specific: Record<
     example:
       "A 12 ft × 15 ft room is 180 sq ft. A 48 in × 6 in plank is 2 sq ft; at 10%, the result is 99 planks.",
     tips: "Use the package coverage printed on the product box whenever available; it is usually the best purchase input.",
+    planning: [
+      "Use exact carton coverage for purchasing and plank dimensions when an explanatory piece count is useful. Check both values on the selected product rather than borrowing specifications from a similar plank.",
+      "Stagger rules, minimum end-piece lengths, cut pieces, doorways, and a narrow final row can change how efficiently planks are used. Patterned products or connected rooms may also constrain the starting point and direction.",
+      "Review the manufacturer’s installation requirements for layout, expansion space, subfloor preparation, and compatible accessories before finalizing the order.",
+    ],
     limits:
       "The result does not model stagger rules, plank direction, transitions, or unusable offcuts.",
   },
@@ -144,6 +160,11 @@ const specific: Record<
     example:
       "A 14 ft × 11 ft room is 154 sq ft. With 10%, 169.4 sq ft is required; at 21.5 sq ft per carton, buy 8 cartons.",
     tips: "Check the manufacturer’s listed coverage per carton and installation instructions before purchasing.",
+    planning: [
+      "Enter the coverage from the exact laminate carton. Carton contents vary, and the purchase count must be rounded up to a whole carton after the allowance is applied.",
+      "Locking edges can be damaged or made unusable by some cuts. Plan board direction, stagger, end-piece length, and the possibility of a narrow final row instead of assuming every offcut will fit elsewhere.",
+      "Expansion gaps and transition locations affect the installation plan even though they are not added to floor area. Follow the product’s requirements for gaps, room spans, underlayment, and layout.",
+    ],
     limits:
       "Plank direction, pattern alignment, damaged locking edges, and room-specific cut reuse are not predicted.",
   },
@@ -155,6 +176,11 @@ const specific: Record<
     example:
       "A 15 ft × 16 ft room is 240 sq ft. At 10%, 264 sq ft is needed; 20 sq ft cartons produce 14 cartons.",
     tips: "For random-length hardwood, rely on actual carton coverage instead of an estimated board count.",
+    planning: [
+      "Use the stated carton or bundle coverage for the selected hardwood. Random-length products do not support a dependable board count from one assumed board length.",
+      "Board selection, unusable defects, end cuts, room transitions, and installation patterns affect material use. Matching boards across connected spaces or reserving material for a future repair may also influence the chosen allowance.",
+      "Confirm product specifications for installation method, grade variation, lot or color considerations, acclimation, and coverage before placing the order.",
+    ],
     limits:
       "Random-length board selection and layout change piece use. Nails, staples, adhesive, barriers, and cost are excluded.",
   },
@@ -166,6 +192,11 @@ const specific: Record<
     example:
       "A 10 ft × 12 ft room on a 12 ft roll uses one 10 ft run before allowance; at 10%, estimated length is 11 ft.",
     tips: "Measure closets and alcoves separately. Ask an installer to plan seams and direction before ordering.",
+    planning: [
+      "Check the available roll width for the exact carpet and record the longest and widest points of each room. Room area alone does not show how many full-width runs must be cut.",
+      "Seam locations, pile direction, pattern orientation, room shape, and whether remnants can be reused all affect the purchase length. Rotating a piece may not be acceptable even when its area appears sufficient.",
+      "Treat this as an early strip estimate. Complex rooms, connected spaces, stairs, or patterned carpet should be professionally measured before material is ordered.",
+    ],
     limits:
       "This conservative strip method does not optimize seam placement or reuse remnants across rooms. It is not installer-grade.",
   },
@@ -224,13 +255,79 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
     );
   else if (slug === "calculators")
     content = (
-      <>
+      <article className="calculator-hub">
+        <p className="eyebrow">Choose the right planning tool</p>
         <h1>All flooring calculators</h1>
-        <p>
-          Six practical tools for the most common flooring material questions.
+        <p className="lede">
+          Start with the material you plan to install. Each calculator uses the
+          same room-area foundation, then adds the purchase details that matter
+          for that flooring type.
         </p>
         <Cards headingLevel={2} />
-      </>
+        <section>
+          <h2>Which calculator should I use?</h2>
+          <div className="selection-grid">
+            <div>
+              <h3><Link href="/general-flooring-calculator">General Flooring Calculator</Link></h3>
+              <p>Use it to combine one or more room areas, adjust the extra-material allowance, and optionally convert the result to whole packages using exact box coverage.</p>
+            </div>
+            <div>
+              <h3><Link href="/tile-calculator">Tile Calculator</Link></h3>
+              <p>Use it when tile length and width matter and you want a whole-tile estimate plus optional box quantities for a floor, wall, or backsplash.</p>
+            </div>
+            <div>
+              <h3><Link href="/vinyl-plank-calculator">Vinyl Plank Calculator</Link></h3>
+              <p>Use it for vinyl plank piece and box estimates based on the selected plank dimensions and manufacturer-stated package coverage.</p>
+            </div>
+            <div>
+              <h3><Link href="/laminate-flooring-calculator">Laminate Flooring Calculator</Link></h3>
+              <p>Use it for laminate plank and carton planning, including the whole-package rounding needed for a locking-floor product.</p>
+            </div>
+            <div>
+              <h3><Link href="/hardwood-flooring-calculator">Hardwood Flooring Calculator</Link></h3>
+              <p>Use it to turn measured area into whole hardwood cartons or bundles using the selected product’s coverage, including random-length products.</p>
+            </div>
+            <div>
+              <h3><Link href="/carpet-calculator">Carpet Calculator</Link></h3>
+              <p>Use it for a preliminary roll-width estimate. Unlike boxed flooring, carpet must be planned as full-width runs with seams and direction in mind.</p>
+            </div>
+          </div>
+        </section>
+        <section className="planning-basics">
+          <h2>What to measure before calculating</h2>
+          <p>
+            Sketch the project and record the length and width of every room,
+            closet, alcove, and connecting area that will receive flooring.
+            Divide L-shaped or irregular spaces into non-overlapping rectangles.
+            For a material-specific estimate, also collect the tile, plank, or
+            board dimensions; the exact box or carton coverage; and carpet roll
+            width where applicable.
+          </p>
+          <h3>Product dimensions or package coverage?</h3>
+          <p>
+            Enter product dimensions when you need an estimated number of
+            individual tiles or planks. For a box or carton purchase, use the
+            coverage printed on the exact product packaging or current
+            manufacturer specification. Package coverage accounts for the
+            product’s actual contents and should not be guessed from a similar
+            item.
+          </p>
+          <h3>Choose extra material for the project</h3>
+          <p>
+            Cuts, breakage, room shape, board or tile direction, pattern
+            matching, and manufacturer rules affect material use differently.
+            That is why the allowance remains editable and why one percentage
+            is not correct for every project. Carpet is different again: room
+            square footage alone cannot determine full-width runs, seams, pile
+            direction, or pattern alignment.
+          </p>
+          <p className="disclaimer">
+            Calculator results are planning estimates. Check measurements,
+            packaging coverage, installation instructions, and final purchase
+            quantities for the exact product before ordering.
+          </p>
+        </section>
+      </article>
     );
   else if (calcKinds[slug]) {
     const c = specific[slug];
@@ -241,6 +338,13 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         <p className="lede">{c.intro}</p>
         <Calculator kind={calcKinds[slug]} />
         <section>
+          <h2>Plan for this material</h2>
+          <p><strong>Calculation method:</strong> {c.method}</p>
+          <p><strong>Example:</strong> {c.example}</p>
+          <p><strong>Before calculating:</strong> {c.tips}</p>
+          <ul className="planning-list">
+            {c.planning.map((item) => <li key={item}>{item}</li>)}
+          </ul>
           <h2>Inputs and results</h2>
           <p>
             {calcKinds[slug] === "general"
@@ -273,6 +377,11 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
         </p>
         <section className="start-here" aria-labelledby="start-here-heading">
           <h2 id="start-here-heading">Start here</h2>
+          <p>
+            New estimates usually follow these steps. If the room is already
+            measured, skip directly to allowance, package coverage, or the
+            guide for the selected material.
+          </p>
           <ol>
             <li><Link href="/guides/how-to-measure-a-room-for-flooring">Measure each floor area</Link></li>
             <li><Link href="/guides/how-to-calculate-flooring-for-multiple-rooms">Combine applicable rooms</Link></li>
@@ -288,7 +397,7 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
               {guides.filter((guide) => guide.group === group).map((guide) => (
                 <Link href={guidePath(guide.slug)} key={guide.slug}>
                   <h3>{guide.title}</h3>
-                  <p>{guide.summary}</p>
+                  <p>{guide.description}</p>
                 </Link>
               ))}
             </div>
@@ -311,6 +420,36 @@ export default function SitePage({ slug = "" }: { slug?: string }) {
           rounding method, and limitations. We aim for useful planning—not false
           certainty. Users remain responsible for checking measurements,
           manufacturer instructions, and final quantities.
+        </p>
+        <h2>How FloorsCalc works</h2>
+        <p>
+          FloorsCalc is a planning and estimating resource. The calculators use
+          standard geometric relationships—such as length × width for a
+          rectangular area—and material coverage relationships appropriate to
+          the estimate. User-entered room dimensions, product dimensions, roll
+          width, and manufacturer package coverage are used only where they
+          apply to the selected calculator.
+        </p>
+        <p>
+          Calculations keep precision through the intermediate steps. Displayed
+          measurements are formatted for readability, while indivisible
+          purchase units such as tiles, planks, boxes, and cartons are rounded
+          up when a whole unit is required. The result separates measured area,
+          added allowance, required area, and packaged coverage so those values
+          are not mistaken for one another.
+        </p>
+        <p>
+          Extra-material percentages are adjustable because cuts, breakage,
+          room shape, patterns, installation methods, and repair-stock needs
+          vary. The site explains formulas, examples, assumptions, and limits so
+          a result can be checked instead of appearing as an unexplained number.
+        </p>
+        <p>
+          Before purchasing, verify the exact product packaging, stated
+          coverage, and installation instructions, along with conditions at the
+          project site. A flooring installer or professional measurement may be
+          needed for complex layouts, seams, stairs, patterned materials, or
+          other conditions that an area calculator cannot model.
         </p>
         <h2>What we do not provide</h2>
         <p>
